@@ -1,0 +1,85 @@
+.detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.banner-swiper {
+  height: 320px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.banner-img {
+  width: 100%;
+  height: 100%;
+}
+
+.header-info .title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.fav-btn {
+  background: #fff1f0;
+  color: #cf1322;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 22px;
+}
+
+.room-list .section-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.booking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-title {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.room-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.room-item:last-child {
+  border-bottom: none;
+}
+
+.room-name {
+  display: block;
+  font-weight: 600;
+}
+
+.price-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.price {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+.login-tip {
+  text-align: center;
+  color: #8a8f98;
+}

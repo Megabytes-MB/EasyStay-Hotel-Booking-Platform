@@ -1,0 +1,50 @@
+:root {
+  --brand: #1890ff;
+  --text: #1f2329;
+  --muted: #8a8f98;
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --danger: #ff4d4f;
+  --success: #52c41a;
+}
+
+page {
+  background: var(--bg);
+  color: var(--text);
+  font-size: 28px;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.btn-primary {
+  background: #ff6a00;
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 20px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.btn-primary:active {
+  background: #7bbcff;
+}
+
+.btn-primary[disabled] {
+  background: #ffd1b3;
+  color: #fff;
+}
