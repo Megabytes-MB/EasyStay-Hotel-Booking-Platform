@@ -456,6 +456,74 @@ app.delete('/api/bookings/:id', (req, res) => {
   });
 });
 
+// ==================== 收入统计 API ====================
+
+// 获取收入统计
+app.get('/api/statistics/revenue', (req, res) => {
+  const { role, userId } = req.query;
+
+  let relevantBookings = bookings.filter(b => b.status === 'confirmed');
+  let relevantHotels = hotels;
+
+  // 如果是商户，只统计自己的酒店的收入
+  if (role === 'merchant' && userId) {
+    const merchantHotels = hotels.filter(h => h.merchantId === userId).map(h => h.id);
+    relevantBookings = relevantBookings.filter(b => merchantHotels.includes(b.hotelId));
+    relevantHotels = relevantHotels.filter(h => h.merchantId === userId);
+  }
+  // 管理员看所有的
+
+  // 计算总收入
+  const totalRevenue = relevantBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  const totalBookings = bookings.filter(b => {
+    if (role === 'merchant' && userId) {
+      const merchantHotels = hotels.filter(h => h.merchantId === userId).map(h => h.id);
+      return merchantHotels.includes(b.hotelId);
+    }
+    return true;
+  }).length;
+
+  const confirmedBookings = relevantBookings.length;
+  const pendingBookings = bookings
+    .filter(b => b.status === 'pending')
+    .filter(b => {
+      if (role === 'merchant' && userId) {
+        const merchantHotels = hotels.filter(h => h.merchantId === userId).map(h => h.id);
+        return merchantHotels.includes(b.hotelId);
+      }
+      return true;
+    }).length;
+
+  const avgRevenuePerBooking = confirmedBookings > 0 ? Math.round(totalRevenue / confirmedBookings) : 0;
+
+  // 按酒店统计
+  const byHotel = relevantHotels.map(hotel => {
+    const hotelBookings = relevantBookings.filter(b => b.hotelId === hotel.id);
+    const revenue = hotelBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+    const bookingCount = hotelBookings.length;
+
+    return {
+      hotelId: hotel.id,
+      hotelName: hotel.name,
+      revenue,
+      bookingCount,
+    };
+  });
+
+  return res.json({
+    code: 200,
+    message: '获取成功',
+    data: {
+      totalRevenue,
+      totalBookings,
+      confirmedBookings,
+      pendingBookings,
+      avgRevenuePerBooking,
+      byHotel,
+    },
+  });
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`server running on http://localhost:${PORT}`);
