@@ -23,13 +23,19 @@ function HotelList() {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
- const menuItems = user.role === 'admin' 
+ const menuItems = user.role === 'admin'
   ? [
       {
         key: 'review',
         icon: <ShopOutlined />,
         label: '酒店审核',
         onClick: () => navigate('/hotels'),
+      },
+      {
+        key: 'bookings',
+        icon: <ShopOutlined />,
+        label: '预订管理',
+        onClick: () => navigate('/bookings'),
       },
     ]
   : [
@@ -39,7 +45,14 @@ function HotelList() {
         label: '我的酒店',
         onClick: () => navigate('/hotels'),
       },
+      {
+        key: 'bookings',
+        icon: <ShopOutlined />,
+        label: '预订查询',
+        onClick: () => navigate('/bookings'),
+      },
     ];
+
 
 
   useEffect(() => {
@@ -206,14 +219,15 @@ const handleApprove = async (id: string, newStatus: string) => {
     </Sider>
 
     <Layout>
-      <Header style={{ background: '#1890ff', color: 'white', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, color: 'white' }}>
-          {user.role === 'admin' ? '酒店审核' : '我的酒店'}
-        </h2>
-        <Button onClick={() => navigate('/dashboard')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}>
-          返回
-        </Button>
-      </Header>
+     <Header style={{ background: '#1890ff', color: 'white', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  <h2 style={{ margin: 0, color: 'white' }}>
+    {user.role === 'admin' ? '酒店审核' : '我的酒店'}
+  </h2>
+  <Button onClick={() => navigate('/dashboard')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}>
+    返回
+  </Button>
+</Header>
+
 
       <Content style={{ padding: '20px', background: '#f0f2f5' }}>
         {user.role === 'merchant' && (

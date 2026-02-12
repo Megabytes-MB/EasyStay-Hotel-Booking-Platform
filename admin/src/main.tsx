@@ -6,6 +6,7 @@ import Register from './Register';
 import Dashboard from './pages/Dashboard';
 import HotelList from './pages/HotelList';
 import HotelForm from './pages/HotelForm';
+import BookingList from './pages/BookingList';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <Route path="/hotels" element={<HotelList />} />
         <Route path="/hotels/new" element={<HotelForm />} />
         <Route path="/hotels/:id" element={<HotelForm />} />
+        <Route path="/bookings" element={<BookingList />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
