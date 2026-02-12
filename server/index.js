@@ -96,6 +96,178 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
+// ==================== 酒店管理 API ====================
+
+// 内存存储酒店数据
+let hotels = [];
+let hotelIdCounter = 1;
+
+// 获取酒店列表（带过滤）
+app.get('/api/hotels', (req, res) => {
+  const { merchantId, status } = req.query;
+
+  let result = hotels;
+
+  // 如果传了 merchantId，只返回该商户的酒店
+  if (merchantId) {
+    result = result.filter(h => h.merchantId === merchantId);
+  }
+
+  // 如果传了 status，只返回特定状态的酒店
+  if (status) {
+    result = result.filter(h => h.status === status);
+  }
+
+  return res.json({
+    code: 200,
+    message: '获取成功',
+    data: result,
+  });
+});
+
+// 获取单个酒店详情
+app.get('/api/hotels/:id', (req, res) => {
+  const hotel = hotels.find(h => h.id === req.params.id);
+
+  if (!hotel) {
+    return res.status(404).json({
+      code: 404,
+      message: '酒店不存在',
+    });
+  }
+
+  return res.json({
+    code: 200,
+    message: '获取成功',
+    data: hotel,
+  });
+});
+
+// 新增酒店
+app.post('/api/hotels', (req, res) => {
+  const {
+    name,
+    description,
+    location,
+    city,
+    rating,
+    pricePerNight,
+    totalRooms,
+    availableRooms,
+    phoneNumber,
+    images,
+    amenities,
+    merchantId,
+  } = req.body;
+
+  // 简单验证
+  if (!name || !location || !city || !merchantId) {
+    return res.status(400).json({
+      code: 400,
+      message: '必填字段不能为空',
+    });
+  }
+
+  const newHotel = {
+    id: `h_${hotelIdCounter++}`,
+    name,
+    description: description || '',
+    location,
+    city,
+    rating: rating || 0,
+    pricePerNight: pricePerNight || 0,
+    totalRooms: totalRooms || 0,
+    availableRooms: availableRooms || 0,
+    phoneNumber: phoneNumber || '',
+    images: images || [],
+    amenities: amenities || [],
+    status: 'pending', // 新增的酒店默认待审核
+    merchantId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  hotels.push(newHotel);
+
+  return res.json({
+    code: 200,
+    message: '新增成功',
+    data: newHotel,
+  });
+});
+
+// 更新酒店（商户编辑自己的酒店 或 管理员审核）
+app.put('/api/hotels/:id', (req, res) => {
+  const hotelIndex = hotels.findIndex(h => h.id === req.params.id);
+
+  if (hotelIndex === -1) {
+    return res.status(404).json({
+      code: 404,
+      message: '酒店不存在',
+    });
+  }
+
+  // 允许更新的字段
+  const {
+    name,
+    description,
+    location,
+    city,
+    rating,
+    pricePerNight,
+    totalRooms,
+    availableRooms,
+    phoneNumber,
+    images,
+    amenities,
+    status, // 管理员可以改状态
+  } = req.body;
+
+  const hotel = hotels[hotelIndex];
+
+  // 只有待审核或已审核的酒店才能更新（拒绝的可能需要重新提交）
+  if (name !== undefined) hotel.name = name;
+  if (description !== undefined) hotel.description = description;
+  if (location !== undefined) hotel.location = location;
+  if (city !== undefined) hotel.city = city;
+  if (rating !== undefined) hotel.rating = rating;
+  if (pricePerNight !== undefined) hotel.pricePerNight = pricePerNight;
+  if (totalRooms !== undefined) hotel.totalRooms = totalRooms;
+  if (availableRooms !== undefined) hotel.availableRooms = availableRooms;
+  if (phoneNumber !== undefined) hotel.phoneNumber = phoneNumber;
+  if (images !== undefined) hotel.images = images;
+  if (amenities !== undefined) hotel.amenities = amenities;
+  if (status !== undefined) hotel.status = status; // 管理员审核时更新状态
+
+  hotel.updatedAt = new Date().toISOString();
+
+  return res.json({
+    code: 200,
+    message: '更新成功',
+    data: hotel,
+  });
+});
+
+// 删除酒店
+app.delete('/api/hotels/:id', (req, res) => {
+  const hotelIndex = hotels.findIndex(h => h.id === req.params.id);
+
+  if (hotelIndex === -1) {
+    return res.status(404).json({
+      code: 404,
+      message: '酒店不存在',
+    });
+  }
+
+  const deletedHotel = hotels.splice(hotelIndex, 1);
+
+  return res.json({
+    code: 200,
+    message: '删除成功',
+    data: deletedHotel[0],
+  });
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`server running on http://localhost:${PORT}`);
