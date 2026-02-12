@@ -1,0 +1,60 @@
+.user-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile .avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+}
+
+.profile .name {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.logout {
+  margin-left: auto;
+  color: #ff4d4f;
+  font-size: 24px;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.fav-item,
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.fav-item:last-child,
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.status {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  text-align: center;
+}
