@@ -43,6 +43,9 @@ export const API_PATHS = {
 
   // 统计
   STATISTICS: '/api/statistics',
+
+  // 地图
+  MAP_REVERSE_GEOCODE: '/api/map/regeo',
 }
 
 export default {

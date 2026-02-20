@@ -10,6 +10,14 @@
   align-items: center;
 }
 
+.location {
+  padding: 8px 0;
+}
+
+.location:active {
+  opacity: 0.8;
+}
+
 .location .label {
   font-size: 22px;
   color: #8a8f98;

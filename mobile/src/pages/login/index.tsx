@@ -5,8 +5,16 @@ import { useAuthStore } from '../../store/useAuthStore'
 import { sendCode } from '../../services/auth'
 import './index.scss'
 
+declare const process: {
+  env: {
+    NODE_ENV?: string
+  }
+}
+
+const isDevMode = process.env.NODE_ENV !== 'production'
+
 const Login = () => {
-  const { login, loginWithWechat, register } = useAuthStore()
+  const { login, loginWithWechat, loginWithWechatPhone, register } = useAuthStore()
   const [isRegister, setIsRegister] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -16,11 +24,11 @@ const Login = () => {
 
   const handleLogin = async () => {
     if (!username || username.length < 3) {
-      Taro.showToast({ title: '请输入用户名（至少3位）', icon: 'none' })
+      Taro.showToast({ title: '请输入用户名（至少 3 位）', icon: 'none' })
       return
     }
     if (!password || password.length < 6) {
-      Taro.showToast({ title: '请输入密码（至少6位）', icon: 'none' })
+      Taro.showToast({ title: '请输入密码（至少 6 位）', icon: 'none' })
       return
     }
 
@@ -30,7 +38,23 @@ const Login = () => {
     }
   }
 
-  const handleWechatLogin = async () => {
+  const handleWechatPhoneLogin = async (event: any) => {
+    const detail = event?.detail || {}
+
+    if (detail.errMsg !== 'getPhoneNumber:ok' || !detail.code) {
+      Taro.showToast({ title: '请先授权微信手机号', icon: 'none' })
+      return
+    }
+
+    const success = await loginWithWechatPhone(detail.code)
+    if (success) {
+      setTimeout(() => Taro.navigateBack(), 500)
+    }
+  }
+
+  const handleDevWechatLogin = async () => {
+    if (!isDevMode) return
+
     const success = await loginWithWechat()
     if (success) {
       setTimeout(() => Taro.navigateBack(), 500)
@@ -39,11 +63,11 @@ const Login = () => {
 
   const handleRegister = async () => {
     if (!username || username.length < 3) {
-      Taro.showToast({ title: '请输入用户名（至少3位）', icon: 'none' })
+      Taro.showToast({ title: '请输入用户名（至少 3 位）', icon: 'none' })
       return
     }
     if (!password || password.length < 6) {
-      Taro.showToast({ title: '请输入密码（至少6位）', icon: 'none' })
+      Taro.showToast({ title: '请输入密码（至少 6 位）', icon: 'none' })
       return
     }
 
@@ -59,11 +83,15 @@ const Login = () => {
       return
     }
     if (sending) return
+
     setSending(true)
     try {
       const response = await sendCode(phone)
       if (response.code === 200) {
-        Taro.showToast({ title: '验证码已发送（开发固定码 123456）', icon: 'none' })
+        Taro.showToast({
+          title: '验证码已发送（开发环境固定码 123456）',
+          icon: 'none',
+        })
       } else {
         Taro.showToast({ title: response.message || '发送失败', icon: 'none' })
       }
@@ -86,6 +114,7 @@ const Login = () => {
     <View className='page login-page'>
       <View className='card login-card'>
         <Text className='title'>{isRegister ? '注册账号' : '欢迎回来'}</Text>
+
         <View className='field'>
           <Text className='label'>用户名</Text>
           <Input
@@ -95,6 +124,7 @@ const Login = () => {
             onInput={e => setUsername(e.detail.value)}
           />
         </View>
+
         <View className='field'>
           <Text className='label'>密码</Text>
           <Input
@@ -105,6 +135,7 @@ const Login = () => {
             onInput={e => setPassword(e.detail.value)}
           />
         </View>
+
         {isRegister && (
           <View className='field'>
             <Text className='label'>手机号（可选）</Text>
@@ -116,6 +147,7 @@ const Login = () => {
             />
           </View>
         )}
+
         {isRegister && (
           <View className='field'>
             <Text className='label'>验证码</Text>
@@ -126,20 +158,36 @@ const Login = () => {
                 placeholder='请输入验证码'
                 onInput={e => setVerifyCode(e.detail.value)}
               />
-              <View className={`code-btn ${sending ? 'disabled' : ''}`} onClick={handleSendCode}>
+              <View
+                className={`code-btn ${sending ? 'disabled' : ''}`}
+                onClick={handleSendCode}
+              >
                 {sending ? '发送中' : '获取验证码'}
               </View>
             </View>
           </View>
         )}
+
         <Button className='btn' onClick={handleSubmit}>
           {isRegister ? '注册' : '登录'}
         </Button>
+
         {!isRegister && (
-          <Button className='btn wechat' onClick={handleWechatLogin}>
-            微信一键登录
+          <Button
+            className='btn wechat'
+            openType='getPhoneNumber'
+            onGetPhoneNumber={handleWechatPhoneLogin}
+          >
+            微信号码一键登录
           </Button>
         )}
+
+        {!isRegister && isDevMode && (
+          <Button className='btn wechat-dev' onClick={handleDevWechatLogin}>
+            开发环境快速登录（免授权）
+          </Button>
+        )}
+
         <View className='toggle-mode' onClick={() => setIsRegister(!isRegister)}>
           <Text className='toggle-text'>
             {isRegister ? '已有账号？点击登录' : '没有账号？点击注册'}

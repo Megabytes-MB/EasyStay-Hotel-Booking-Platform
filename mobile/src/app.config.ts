@@ -1,6 +1,7 @@
 export default defineAppConfig({
   pages: [
     'pages/home/index',
+    'pages/city-picker/index',
     'pages/list/index',
     'pages/detail/index',
     'pages/login/index',

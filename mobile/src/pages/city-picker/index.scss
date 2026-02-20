@@ -1,0 +1,207 @@
+.city-picker-page {
+  min-height: 100vh;
+  padding: 0;
+  background: #f5f5f5;
+}
+
+.picker-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 0 24px 12px;
+  background: #f5f5f5;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.back-btn,
+.header-placeholder {
+  width: 56px;
+  height: 56px;
+  line-height: 56px;
+  text-align: center;
+  color: #2f2f2f;
+  font-size: 44px;
+}
+
+.header-title {
+  font-size: 42px;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.search-box {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: #ededed;
+  padding: 0 24px;
+}
+
+.search-icon {
+  font-size: 24px;
+  color: #a0a0a0;
+}
+
+.search-box input {
+  flex: 1;
+  height: 72px;
+  font-size: 26px;
+  color: #333;
+}
+
+.tab-row {
+  margin-top: 14px;
+  display: flex;
+}
+
+.tab-item {
+  position: relative;
+  flex: 1;
+  text-align: center;
+  color: #a1a1a1;
+  padding: 12px 0 14px;
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.tab-item.active {
+  color: #39a355;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 42px;
+  height: 6px;
+  border-radius: 999px;
+  background: #39a355;
+  transform: translateX(-50%);
+}
+
+.content-wrap {
+  padding: 8px 76px 42px 24px;
+}
+
+.section {
+  margin-top: 20px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  display: block;
+  font-size: 42px;
+  font-weight: 500;
+  color: #2b2b2b;
+}
+
+.clear-btn {
+  color: #7f7f7f;
+  font-size: 30px;
+}
+
+.single-city {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.locate-btn {
+  min-width: 84px;
+  height: 64px;
+  border-radius: 6px;
+  background: #def3e4;
+  color: #2f9d51;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.locate-btn.loading {
+  background: #ececec;
+  color: #7f7f7f;
+}
+
+.city-grid,
+.index-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.city-chip,
+.index-chip {
+  min-height: 64px;
+  border-radius: 6px;
+  background: #ececec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #383838;
+}
+
+.city-chip.located {
+  width: 156px;
+  justify-content: flex-start;
+  padding-left: 22px;
+  gap: 8px;
+  color: #2d2d2d;
+}
+
+.location-dot {
+  color: #3db55d;
+  font-size: 18px;
+}
+
+.empty-text {
+  margin-top: 12px;
+  font-size: 26px;
+  color: #9a9a9a;
+}
+
+.search-section {
+  padding: 20px 24px 30px;
+}
+
+.side-index {
+  position: fixed;
+  top: 280px;
+  right: 8px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.side-index-item {
+  width: 40px;
+  line-height: 32px;
+  text-align: center;
+  font-size: 24px;
+  color: #9a9a9a;
+}
+
+.side-index-item.active {
+  border-radius: 999px;
+  background: #282828;
+  color: #fff;
+}

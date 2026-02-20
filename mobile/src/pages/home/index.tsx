@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, Input, Image, Picker, Swiper, SwiperItem } from '@tarojs/components'
+import { View, Text, Input, Image, Swiper, SwiperItem } from '@tarojs/components'
 import Taro from '@tarojs/taro'
+import { useDidShow } from '@tarojs/taro'
 import { useAuthStore } from '../../store/useAuthStore'
 import { fetchHomeAdHotels, Hotel } from '../../services/hotel'
 import './index.scss'
+
+const CITY_STORAGE_KEY = 'selected_city'
+const DEFAULT_AVATAR =
+  'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200'
 
 const Home = () => {
   const { isLogin, userInfo } = useAuthStore()
   const [keyword, setKeyword] = useState('')
   const [city, setCity] = useState('上海')
   const [homeAds, setHomeAds] = useState<Hotel[]>([])
-
-  const cities = ['上海', '北京', '杭州', '广州', '深圳', '成都']
 
   const handleSearch = () => {
     Taro.navigateTo({
@@ -26,8 +29,20 @@ const Home = () => {
   }
 
   useEffect(() => {
+    const savedCity = Taro.getStorageSync(CITY_STORAGE_KEY)
+    if (typeof savedCity === 'string' && savedCity.trim()) {
+      setCity(savedCity)
+    }
+
     fetchHomeAdHotels().then(setHomeAds)
   }, [])
+
+  useDidShow(() => {
+    const savedCity = Taro.getStorageSync(CITY_STORAGE_KEY)
+    if (typeof savedCity === 'string' && savedCity.trim()) {
+      setCity(savedCity)
+    }
+  })
 
   const handleAdClick = (hotelId: number) => {
     Taro.navigateTo({
@@ -35,22 +50,26 @@ const Home = () => {
     })
   }
 
+  const handleCityClick = () => {
+    Taro.navigateTo({
+      url: `/pages/city-picker/index?city=${encodeURIComponent(city)}`
+    })
+  }
+
   return (
     <View className='page home'>
       <View className='top-bar'>
-        <Picker
-          mode='selector'
-          range={cities}
-          onChange={e => setCity(cities[Number(e.detail.value)])}
-        >
-          <View className='location'>
-            <Text className='label'>目的地</Text>
-            <Text className='value'>{city}</Text>
-            <Text className='city-tip'>点击切换</Text>
-          </View>
-        </Picker>
+        <View className='location' onClick={handleCityClick}>
+          <Text className='label'>目的地</Text>
+          <Text className='value'>{city}</Text>
+          <Text className='city-tip'>点击切换</Text>
+        </View>
         <View className='user-entry' onClick={() => Taro.switchTab({ url: '/pages/user/index' })}>
-          {isLogin ? <Image className='avatar' src={userInfo?.avatar} /> : <Text>登录/我的</Text>}
+          {isLogin ? (
+            <Image className='avatar' src={userInfo?.avatar || DEFAULT_AVATAR} />
+          ) : (
+            <Text>登录/我的</Text>
+          )}
         </View>
       </View>
 

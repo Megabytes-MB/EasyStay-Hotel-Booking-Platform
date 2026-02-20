@@ -1,7 +1,3 @@
-/**
- * Auth services
- */
-
 import { post } from '../utils/request'
 import { API_PATHS } from '../config/api'
 
@@ -17,11 +13,11 @@ export interface RegisterParams {
   verifyCode?: string
 }
 
-export interface WechatLoginParams {
-  code: string
+export interface WechatPhoneLoginParams {
+  loginCode: string
+  phoneCode?: string
   nickname?: string
   avatar?: string
-  phone?: string
 }
 
 export interface UserData {
@@ -39,22 +35,20 @@ export interface LoginResponse {
   user: UserData
 }
 
-export const login = async (params: LoginParams) => {
-  return post<LoginResponse>(API_PATHS.AUTH_LOGIN, params, {
+export const login = async (params: LoginParams) =>
+  post<LoginResponse>(API_PATHS.AUTH_LOGIN, params, {
     showLoading: true,
     loadingText: '登录中...',
   })
-}
 
-export const wechatLogin = async (params: WechatLoginParams) => {
-  return post<LoginResponse>(API_PATHS.AUTH_WECHAT_LOGIN, params, {
+export const wechatPhoneLogin = async (params: WechatPhoneLoginParams) =>
+  post<LoginResponse>(API_PATHS.AUTH_WECHAT_LOGIN, params, {
     showLoading: true,
     loadingText: '微信登录中...',
   })
-}
 
-export const register = async (params: RegisterParams) => {
-  return post<UserData>(
+export const register = async (params: RegisterParams) =>
+  post<UserData>(
     API_PATHS.AUTH_REGISTER,
     {
       ...params,
@@ -65,18 +59,16 @@ export const register = async (params: RegisterParams) => {
       loadingText: '注册中...',
     }
   )
-}
 
-export const sendCode = async (phone: string) => {
-  return post<{ code: string; expiresIn: number }>(API_PATHS.AUTH_SEND_CODE, { phone }, {
+export const sendCode = async (phone: string) =>
+  post<{ code: string; expiresIn: number }>(API_PATHS.AUTH_SEND_CODE, { phone }, {
     showLoading: true,
     loadingText: '发送中...',
   })
-}
 
 export default {
   login,
-  wechatLogin,
+  wechatPhoneLogin,
   register,
   sendCode,
 }

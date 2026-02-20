@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const hotelRoutes = require('./routes/hotels');
 const bookingRoutes = require('./routes/bookings');
 const statisticsRoutes = require('./routes/statistics');
+const mapRoutes = require('./routes/map');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,9 @@ app.use('/api/bookings', bookingRoutes);
 
 // 统计路由
 app.use('/api/statistics', statisticsRoutes);
+
+// 地图路由
+app.use('/api/map', mapRoutes);
 
 // ==================== 错误处理 ====================
 app.use((err, req, res, next) => {
@@ -65,6 +69,7 @@ const startServer = async () => {
       console.log(`   - Hotels: GET /api/hotels, POST /api/hotels, PUT /api/hotels/:id, DELETE /api/hotels/:id`);
       console.log(`   - Bookings: GET /api/bookings, POST /api/bookings, PUT /api/bookings/:id, DELETE /api/bookings/:id`);
       console.log(`   - Statistics: GET /api/statistics/revenue`);
+      console.log(`   - Map(Tencent): GET /api/map/regeo?longitude=...&latitude=...`);
     });
   } catch (error) {
     console.error('❌ Unable to start server:', error);
