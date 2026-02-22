@@ -31,6 +31,7 @@ interface SortState {
 
 interface ListFilters {
   keyword: string
+  location: string
   roomType: string
   minPrice: string
   maxPrice: string
@@ -42,6 +43,7 @@ interface ListFilters {
 
 const defaultFilters: ListFilters = {
   keyword: '',
+  location: '',
   roomType: '',
   minPrice: '',
   maxPrice: '',
@@ -60,6 +62,11 @@ const decodeSafe = (value: string) => {
   } catch {
     return value
   }
+}
+
+const ensureStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return []
+  return value.filter(item => typeof item === 'string')
 }
 
 const normalizedText = (value: string) => value.toLowerCase().replace(/\s+/g, '')
@@ -119,15 +126,16 @@ const calculateDistanceKm = (
 const HotelList = () => {
   const router = useRouter()
   const { isLogin } = useAuthStore()
+  const routeParams = (router?.params || {}) as Record<string, string>
 
-  const initialCity = decodeSafe(router.params.city || '')
-  const initialKeyword = decodeSafe(router.params.keyword || '')
-  const initialLocation = decodeSafe(router.params.location || '')
-  const initialTag = decodeSafe(router.params.tag || '')
-  const initialMinPrice = decodeSafe(router.params.minPrice || '')
-  const initialMaxPrice = decodeSafe(router.params.maxPrice || '')
-  const initialMinScore = decodeSafe(router.params.minScore || '')
-  const mergedInitialKeyword = [initialLocation, initialKeyword].filter(Boolean).join(' ').trim()
+  const initialCity = decodeSafe(routeParams.city || '')
+  const initialKeyword = decodeSafe(routeParams.keyword || '')
+  const initialLocation = decodeSafe(routeParams.location || '')
+  const initialTag = decodeSafe(routeParams.tag || '')
+  const initialMinPrice = decodeSafe(routeParams.minPrice || '')
+  const initialMaxPrice = decodeSafe(routeParams.maxPrice || '')
+  const initialMinScore = decodeSafe(routeParams.minScore || '')
+  const [autoSortedLocation, setAutoSortedLocation] = useState('')
 
   const [city, setCity] = useState(initialCity || '上海')
   const [list, setList] = useState<Hotel[]>([])
@@ -141,7 +149,8 @@ const HotelList = () => {
   const [searchPoint, setSearchPoint] = useState<{ longitude: number; latitude: number } | null>(null)
   const [draftFilters, setDraftFilters] = useState<ListFilters>(() => ({
     ...defaultFilters,
-    keyword: mergedInitialKeyword,
+    keyword: initialKeyword,
+    location: initialLocation,
     minPrice: initialMinPrice,
     maxPrice: initialMaxPrice,
     minScore: initialMinScore,
@@ -149,13 +158,17 @@ const HotelList = () => {
   }))
   const [appliedFilters, setAppliedFilters] = useState<ListFilters>(() => ({
     ...defaultFilters,
-    keyword: mergedInitialKeyword,
+    keyword: initialKeyword,
+    location: initialLocation,
     minPrice: initialMinPrice,
     maxPrice: initialMaxPrice,
     minScore: initialMinScore,
     quickTags: initialTag ? [initialTag] : [],
   }))
-  const searchLocationText = useMemo(() => initialLocation.trim(), [initialLocation])
+  const searchLocationText = useMemo(
+    () => String(appliedFilters.location || '').trim(),
+    [appliedFilters.location]
+  )
   const canSortByDistance = searchLocationText.length > 0
 
   const loadHotels = async (p: number, reset = false) => {
@@ -167,18 +180,23 @@ const HotelList = () => {
       page: p,
       pageSize: PAGE_SIZE,
       city,
-      keyword: appliedFilters.keyword || undefined,
+      keyword: searchLocationText ? undefined : (appliedFilters.keyword || undefined),
       roomType: appliedFilters.roomType || undefined,
       minPrice: appliedFilters.minPrice ? Number(appliedFilters.minPrice) : undefined,
       maxPrice: appliedFilters.maxPrice ? Number(appliedFilters.maxPrice) : undefined,
       startDate: appliedFilters.startDate || undefined,
       endDate: appliedFilters.endDate || undefined,
     })
+    const nextList = Array.isArray(res?.list) ? res.list : []
+    const safeHasMore = Boolean(res?.hasMore)
 
     Taro.hideLoading()
     setLoading(false)
-    setHasMore(res.hasMore)
-    setList(prev => (reset ? res.list : [...prev, ...res.list]))
+    setHasMore(safeHasMore)
+    setList(prev => {
+      const safePrev = Array.isArray(prev) ? prev : []
+      return reset ? nextList : [...safePrev, ...nextList]
+    })
   }
 
   useDidShow(() => {
@@ -197,6 +215,7 @@ const HotelList = () => {
     let active = true
     if (!canSortByDistance) {
       setSearchPoint(null)
+      setAutoSortedLocation('')
       if (sortState.field === 'distance') {
         setSortState({ field: '', order: 'asc' })
       }
@@ -207,6 +226,11 @@ const HotelList = () => {
       .then(point => {
         if (active) {
           setSearchPoint(point)
+          if (point && autoSortedLocation !== searchLocationText) {
+            // Auto switch to nearest-first once when a new location search resolves.
+            setSortState({ field: 'distance', order: 'asc' })
+            setAutoSortedLocation(searchLocationText)
+          }
           if (!point && sortState.field === 'distance') {
             setSortState({ field: '', order: 'asc' })
           }
@@ -224,7 +248,7 @@ const HotelList = () => {
     return () => {
       active = false
     }
-  }, [canSortByDistance, searchLocationText, city, sortState.field])
+  }, [canSortByDistance, searchLocationText, city, sortState.field, autoSortedLocation])
 
   const stayNights = useMemo(() => {
     if (!draftFilters.startDate || !draftFilters.endDate) return 1
@@ -233,7 +257,10 @@ const HotelList = () => {
   }, [draftFilters.startDate, draftFilters.endDate])
 
   const filteredList = useMemo(() => {
-    return list.filter(item => {
+    const safeList = Array.isArray(list) ? list : []
+    const activeQuickTags = ensureStringArray(appliedFilters.quickTags)
+
+    return safeList.filter(item => {
       const minPrice = parseFilterNumber(appliedFilters.minPrice)
       const maxPrice = parseFilterNumber(appliedFilters.maxPrice)
       const minScore = parseFilterNumber(appliedFilters.minScore)
@@ -249,8 +276,8 @@ const HotelList = () => {
         if (!roomMatched) return false
       }
 
-      if (appliedFilters.quickTags.length > 0) {
-        const allMatched = appliedFilters.quickTags.every(tagText => matchesQuickTag(item, tagText))
+      if (activeQuickTags.length > 0) {
+        const allMatched = activeQuickTags.every(tagText => matchesQuickTag(item, tagText))
         if (!allMatched) return false
       }
 
@@ -306,13 +333,15 @@ const HotelList = () => {
 
   const activeFilterSummary = useMemo(() => {
     const blocks: string[] = []
+    const activeQuickTags = ensureStringArray(appliedFilters.quickTags)
+
     if (appliedFilters.roomType) blocks.push(appliedFilters.roomType)
     if (appliedFilters.minScore) blocks.push(`${appliedFilters.minScore}+`)
     if (appliedFilters.minPrice || appliedFilters.maxPrice) {
       blocks.push(`￥${appliedFilters.minPrice || '0'}-￥${appliedFilters.maxPrice || '不限'}`)
     }
-    if (appliedFilters.quickTags.length > 0) {
-      blocks.push(...appliedFilters.quickTags)
+    if (activeQuickTags.length > 0) {
+      blocks.push(...activeQuickTags)
     }
     return blocks
   }, [appliedFilters])
@@ -336,27 +365,38 @@ const HotelList = () => {
 
     setAppliedFilters({
       ...draftFilters,
-      keyword: draftFilters.keyword.trim(),
+      keyword: String(draftFilters.keyword || '').trim(),
+      location: String(draftFilters.location || '').trim(),
+      quickTags: ensureStringArray(draftFilters.quickTags),
     })
   }
 
   const resetFilters = () => {
-    const resetValue = { ...defaultFilters, keyword: draftFilters.keyword }
+    const resetValue = {
+      ...defaultFilters,
+      keyword: String(draftFilters.keyword || ''),
+      location: String(draftFilters.location || ''),
+    }
     setDraftFilters(resetValue)
     setAppliedFilters(resetValue)
   }
 
   const toggleQuickTag = (tagText: string) => {
     setDraftFilters(prev => {
-      const existed = prev.quickTags.includes(tagText)
+      const currentQuickTags = ensureStringArray(prev.quickTags)
+      const existed = currentQuickTags.includes(tagText)
       return {
         ...prev,
         quickTags: existed
-          ? prev.quickTags.filter(tag => tag !== tagText)
-          : [...prev.quickTags, tagText],
+          ? currentQuickTags.filter(tag => tag !== tagText)
+          : [...currentQuickTags, tagText],
       }
     })
   }
+  const draftQuickTags = useMemo(
+    () => ensureStringArray(draftFilters.quickTags),
+    [draftFilters.quickTags]
+  )
 
   const toggleSection = (key: 'price' | 'tags' | 'room') => {
     setActiveSection(prev => (prev === key ? '' : key))
@@ -402,11 +442,11 @@ const HotelList = () => {
               </View>
 
               <View className='keyword-box'>
-                <Text className='core-label'>搜索设置</Text>
+                <Text className='core-label'>搜索</Text>
                 <Input
-                  value={draftFilters.keyword}
-                  placeholder='位置/品牌/酒店'
-                  onInput={e => setDraftFilters(prev => ({ ...prev, keyword: e.detail.value }))}
+                  value={String(draftFilters.location || '')}
+                  placeholder='地址/商圈/地标'
+                  onInput={e => setDraftFilters(prev => ({ ...prev, location: e.detail.value }))}
                 />
               </View>
             </View>
@@ -526,7 +566,7 @@ const HotelList = () => {
                 {QUICK_TAG_OPTIONS.map(tagText => (
                   <Text
                     key={tagText}
-                    className={`chip ${draftFilters.quickTags.includes(tagText) ? 'active' : ''}`}
+                    className={`chip ${draftQuickTags.includes(tagText) ? 'active' : ''}`}
                     onClick={() => toggleQuickTag(tagText)}
                   >
                     {tagText}
