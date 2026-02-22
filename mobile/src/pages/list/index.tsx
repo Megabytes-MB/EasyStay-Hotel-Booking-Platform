@@ -126,12 +126,12 @@ const HotelList = () => {
 
       {list.length === 0 && !loading && <View className="no-more">暂无匹配酒店</View>}
 
-      <VirtualList
+      <VirtualList<Hotel>
         data={list}
         itemHeight={200}
         height={900}
         onReachBottom={handleScrollToLower}
-        renderItem={item => (
+        renderItem={(item: Hotel) => (
           <View className="hotel-card" onClick={() => goDetail(item.id)}>
             <Image className="thumb" src={item.thumb} />
             <View className="info">
