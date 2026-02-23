@@ -9,6 +9,8 @@ const authRoutes = require('./routes/auth');
 const hotelRoutes = require('./routes/hotels');
 const bookingRoutes = require('./routes/bookings');
 const statisticsRoutes = require('./routes/statistics');
+const mapRoutes = require('./routes/map');
+const holidayRoutes = require('./routes/holidays');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,6 +38,12 @@ app.use('/api/bookings', bookingRoutes);
 // 统计路由
 app.use('/api/statistics', statisticsRoutes);
 
+// 地图路由
+app.use('/api/map', mapRoutes);
+
+// 节假日与活动路由
+app.use('/api/holidays', holidayRoutes);
+
 // ==================== 错误处理 ====================
 app.use((err, req, res, next) => {
   console.error('Error:', err);
@@ -61,10 +69,14 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`✅ Server is running on http://localhost:${PORT}`);
       console.log(`📝 API Documentation:`);
-      console.log(`   - Auth: POST /api/auth/login, /api/auth/register`);
+      console.log(`   - Auth: POST /api/auth/login, /api/auth/register, /api/auth/wechat-login, /api/auth/wechat-bind`);
       console.log(`   - Hotels: GET /api/hotels, POST /api/hotels, PUT /api/hotels/:id, DELETE /api/hotels/:id`);
       console.log(`   - Bookings: GET /api/bookings, POST /api/bookings, PUT /api/bookings/:id, DELETE /api/bookings/:id`);
       console.log(`   - Statistics: GET /api/statistics/revenue`);
+      console.log(`   - Map(Tencent->Baidu fallback): GET /api/map/regeo?longitude=...&latitude=...`);
+      console.log(`   - Map(Tencent->Baidu fallback): GET /api/map/search?keyword=...&region=...`);
+      console.log(`   - Holidays: GET /api/holidays, GET /api/holidays/manage, POST /api/holidays/sync`);
+      console.log(`   - Map Keys: TENCENT_MAP_KEY, BAIDU_MAP_AK`);
     });
   } catch (error) {
     console.error('❌ Unable to start server:', error);

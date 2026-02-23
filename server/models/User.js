@@ -26,9 +26,26 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('admin', 'merchant'),
+    type: DataTypes.ENUM('admin', 'merchant', 'user'),
     allowNull: false,
-    defaultValue: 'merchant',
+    defaultValue: 'user',
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  avatar: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+  },
+  nickname: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  wechatOpenId: {
+    type: DataTypes.STRING(128),
+    allowNull: true,
+    unique: true,
   },
   createdAt: {
     type: DataTypes.DATE,

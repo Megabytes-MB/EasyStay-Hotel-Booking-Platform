@@ -17,6 +17,16 @@ const Booking = sequelize.define('Booking', {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  },
   guestName: {
     type: DataTypes.STRING(255),
     allowNull: false,
@@ -83,6 +93,9 @@ const Booking = sequelize.define('Booking', {
   indexes: [
     {
       fields: ['hotelId'],
+    },
+    {
+      fields: ['userId'],
     },
     {
       fields: ['status'],

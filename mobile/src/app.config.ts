@@ -1,6 +1,7 @@
 export default defineAppConfig({
   pages: [
     'pages/home/index',
+    'pages/city-picker/index',
     'pages/list/index',
     'pages/detail/index',
     'pages/login/index',
@@ -12,6 +13,12 @@ export default defineAppConfig({
     navigationBarTitleText: 'Easy Stay 出行',
     navigationBarTextStyle: 'black'
   },
+  permission: {
+    'scope.userLocation': {
+      desc: '用于展示您当前位置并提供到酒店的导航能力'
+    }
+  },
+  requiredPrivateInfos: ['getLocation'],
   tabBar: {
     color: '#999',
     selectedColor: '#1890ff',

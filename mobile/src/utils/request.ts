@@ -31,6 +31,11 @@ const getToken = (): string => {
   return authData?.token || ''
 }
 
+const buildAuthHeader = (token: string): string => {
+  if (!token) return ''
+  return token.startsWith('Bearer ') ? token : `Bearer ${token}`
+}
+
 /**
  * 统一请求方法
  */
@@ -55,7 +60,7 @@ export const request = async <T = any>(
       data,
       header: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { Authorization: buildAuthHeader(token) }),
         ...header,
       },
     })

@@ -36,6 +36,12 @@ function Dashboard() {
         label: '收入统计',
         onClick: () => navigate('/statistics'),
       },
+      {
+        key: 'holidays',
+        icon: <ShopOutlined />,
+        label: '节假日活动',
+        onClick: () => navigate('/holidays'),
+      },
     ]
   : [
       {

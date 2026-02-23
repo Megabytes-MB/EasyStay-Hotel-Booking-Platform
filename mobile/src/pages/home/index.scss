@@ -1,4 +1,4 @@
-.home {
+﻿.home {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -8,6 +8,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.location {
+  padding: 8px 0;
+}
+
+.location:active {
+  opacity: 0.8;
 }
 
 .location .label {
@@ -55,8 +63,67 @@
   color: #6b7280;
 }
 
+.home-ad {
+  background: linear-gradient(135deg, #fff7e8, #fff);
+}
+
+.home-ad .ad-label {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ff8a00;
+  color: #fff;
+  font-size: 20px;
+}
+
+.home-ad .ad-swiper {
+  height: 220px;
+}
+
+.home-ad .ad-item {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  height: 100%;
+}
+
+.home-ad .ad-image {
+  width: 220px;
+  height: 160px;
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.home-ad .ad-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.home-ad .ad-title {
+  display: block;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1f2329;
+}
+
+.home-ad .ad-subtitle,
+.home-ad .ad-placeholder {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 22px;
+}
+
 .search .field {
   margin-bottom: 16px;
+}
+
+.search .field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .search .label {
@@ -66,8 +133,36 @@
   margin-bottom: 8px;
 }
 
-.search .date .value {
-  color: #1f2329;
+.search .option-row {
+  margin-top: 8px;
+}
+
+.search .option-title {
+  display: block;
+  font-size: 22px;
+  color: #8a8f98;
+  margin-bottom: 8px;
+}
+
+.search .option-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.search .option-chip {
+  font-size: 20px;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #53606e;
+}
+
+.search .option-chip.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
 }
 
 .search {
