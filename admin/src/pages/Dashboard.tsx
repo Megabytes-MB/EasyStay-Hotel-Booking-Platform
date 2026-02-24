@@ -25,12 +25,6 @@ function Dashboard() {
         onClick: () => navigate('/hotels'),
       },
       {
-        key: 'bookings',
-        icon: <ShopOutlined />,
-        label: '预订管理',
-        onClick: () => navigate('/bookings'),
-      },
-      {
         key: 'statistics',
         icon: <ShopOutlined />,
         label: '收入统计',
@@ -87,7 +81,7 @@ function Dashboard() {
             <h2>{user.role === 'admin' ? '管理员面板' : '商户面板'}</h2>
             <p>
               {user.role === 'admin'
-                ? '点击左侧菜单管理酒店和预订。'
+                ? '点击左侧菜单管理酒店与平台运营模块。'
                 : '点击左侧菜单查看你的酒店和预订。'}
             </p>
           </div>

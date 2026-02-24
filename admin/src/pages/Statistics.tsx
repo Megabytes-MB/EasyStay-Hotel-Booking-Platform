@@ -37,12 +37,6 @@ function Statistics() {
           onClick: () => navigate('/hotels'),
         },
         {
-          key: 'bookings',
-          icon: <ShopOutlined />,
-          label: '预订管理',
-          onClick: () => navigate('/bookings'),
-        },
-        {
           key: 'statistics',
           icon: <ShopOutlined />,
           label: '收入统计',
