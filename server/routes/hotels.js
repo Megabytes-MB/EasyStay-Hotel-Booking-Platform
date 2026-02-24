@@ -1,7 +1,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Hotel, User } = require('../models');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, optionalAuthenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -23,17 +23,22 @@ const isValidLongitude = value => Number.isFinite(value) && value >= -180 && val
  * GET /api/hotels
  * 获取酒店列表（支持角色、状态、城市、关键词筛选）
  */
-router.get('/', async (req, res) => {
+router.get('/', optionalAuthenticateToken, async (req, res) => {
   try {
-    const { status, role, userId, city, keyword } = req.query;
+    const { status, city, keyword } = req.query;
     const where = {};
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isMerchant = req.user && req.user.role === 'merchant';
 
-    if (role === 'merchant' && userId) {
-      where.merchantId = userId;
+    if (isMerchant) {
+      where.merchantId = req.user.id;
     }
 
     if (status) {
-      where.status = status;
+      // Anonymous and normal user can only read approved hotels.
+      where.status = isAdmin || isMerchant ? status : 'approved';
+    } else if (!isAdmin && !isMerchant) {
+      where.status = 'approved';
     }
 
     if (city) {
@@ -183,6 +188,13 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    if (req.user.role !== 'merchant') {
+      return res.status(403).json({
+        code: 403,
+        message: 'Only merchant can create hotels',
+      });
+    }
+
     const {
       name,
       description,
@@ -294,7 +306,14 @@ router.put('/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    if (req.user.role === 'merchant' && hotel.merchantId !== req.user.id) {
+    if (!['admin', 'merchant'].includes(req.user.role)) {
+      return res.status(403).json({
+        code: 403,
+        message: 'No permission to update hotel',
+      });
+    }
+
+    if (!(req.user.role === 'admin' || (req.user.role === 'merchant' && hotel.merchantId === req.user.id))) {
       return res.status(403).json({
         code: 403,
         message: '无权限编辑该酒店',
@@ -489,7 +508,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    if (req.user.role === 'merchant' && hotel.merchantId !== req.user.id) {
+    if (!(req.user.role === 'admin' || (req.user.role === 'merchant' && hotel.merchantId === req.user.id))) {
       return res.status(403).json({
         code: 403,
         message: '无权限删除',

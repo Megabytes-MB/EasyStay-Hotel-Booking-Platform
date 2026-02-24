@@ -4,13 +4,27 @@ interface PrivateRouteProps {
   children: React.ReactNode;
 }
 
+const ALLOWED_ADMIN_PORTAL_ROLES = new Set(['admin', 'merchant']);
+
 export function PrivateRoute({ children }: PrivateRouteProps) {
   const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
+  const rawUser = localStorage.getItem('user');
 
-  // 如果没有 token 或 user，重定向到登录页
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
+  if (!token || !rawUser) {
+    return <Navigate to='/login' replace />;
+  }
+
+  try {
+    const user = JSON.parse(rawUser);
+    if (!ALLOWED_ADMIN_PORTAL_ROLES.has(user?.role)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return <Navigate to='/login' replace />;
+    }
+  } catch (_error) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return <Navigate to='/login' replace />;
   }
 
   return <>{children}</>;
