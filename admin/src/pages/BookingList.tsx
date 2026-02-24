@@ -46,12 +46,6 @@ function BookingList() {
           onClick: () => navigate('/hotels'),
         },
         {
-          key: 'bookings',
-          icon: <ShopOutlined />,
-          label: '预订管理',
-          onClick: () => navigate('/bookings'),
-        },
-        {
           key: 'statistics',
           icon: <ShopOutlined />,
           label: '收入统计',
@@ -137,12 +131,20 @@ function BookingList() {
   }, [get, user.role, user.id, selectedHotelId]);
 
   useEffect(() => {
+    if (user.role === 'admin') {
+      message.warning('管理员端已移除预订管理模块');
+      navigate('/dashboard', { replace: true });
+      return;
+    }
     fetchHotels();
-  }, [fetchHotels]);
+  }, [fetchHotels, navigate, user.role]);
 
   useEffect(() => {
+    if (user.role === 'admin') {
+      return;
+    }
     fetchBookings();
-  }, [fetchBookings]);
+  }, [fetchBookings, user.role]);
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {

@@ -32,7 +32,6 @@ function HotelList() {
   const menuItems = user.role === 'admin'
     ? [
         { key: 'review', icon: <ShopOutlined />, label: '酒店审核', onClick: () => navigate('/hotels') },
-        { key: 'bookings', icon: <ShopOutlined />, label: '预订管理', onClick: () => navigate('/bookings') },
         { key: 'statistics', icon: <ShopOutlined />, label: '收入统计', onClick: () => navigate('/statistics') },
         { key: 'holidays', icon: <ShopOutlined />, label: '节假日活动', onClick: () => navigate('/holidays') },
       ]
