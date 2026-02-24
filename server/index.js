@@ -17,6 +17,14 @@ const holidayRoutes = require('./routes/holidays');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const parseBooleanEnv = (value, defaultValue = false) => {
+  if (value === undefined || value === null || value === '') return defaultValue;
+  const normalized = String(value).trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return defaultValue;
+};
+
 const ensureDatabaseExists = async () => {
   const host = process.env.DB_HOST;
   const port = Number(process.env.DB_PORT || 3306);
@@ -91,8 +99,29 @@ const startServer = async () => {
     console.log('✅ Database connection has been established successfully.');
 
     // 同步数据库（创建表）
-    await sequelize.sync({ alter: true });
-    console.log('✅ Database tables synchronized successfully.');
+    // 默认不执行 alter，避免在已有库上反复变更索引导致 ER_TOO_MANY_KEYS
+    const enableAlterSync = parseBooleanEnv(process.env.DB_SYNC_ALTER, false);
+
+    if (enableAlterSync) {
+      try {
+        await sequelize.sync({ alter: true });
+        console.log('✅ Database tables synchronized successfully (alter=true).');
+      } catch (syncError) {
+        const dbErrorCode = syncError?.parent?.code || syncError?.original?.code || syncError?.code;
+        if (dbErrorCode === 'ER_TOO_MANY_KEYS' || dbErrorCode === 'ER_LOCK_DEADLOCK') {
+          console.warn(
+            `⚠️ sequelize sync alter failed with ${dbErrorCode}, fallback to safe sync without alter.`
+          );
+          await sequelize.sync();
+          console.log('✅ Database tables synchronized successfully (fallback sync).');
+        } else {
+          throw syncError;
+        }
+      }
+    } else {
+      await sequelize.sync();
+      console.log('✅ Database tables synchronized successfully (safe sync, alter disabled).');
+    }
 
     // 启动服务器
     app.listen(PORT, () => {

@@ -32,6 +32,20 @@ interface MapPoint {
   latitude: number;
 }
 
+const getMapSearchErrorMessage = (responseData: any): string => {
+  const defaultMessage = String(responseData?.message || '地点搜索失败');
+  const tencentMessage = String(responseData?.data?.tencent?.providerMessage || '').trim();
+  const baiduHint = String(responseData?.data?.baidu?.hint || '').trim();
+  const baiduMessage = String(responseData?.data?.baidu?.providerMessage || '').trim();
+
+  const detailParts = [tencentMessage, baiduHint || baiduMessage].filter(Boolean);
+  if (detailParts.length === 0) {
+    return defaultMessage;
+  }
+
+  return `${defaultMessage}：${detailParts.join('；')}`;
+};
+
 function HotelForm() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -116,11 +130,11 @@ function HotelForm() {
           message.info('未找到匹配地点，请尝试更精确的关键词');
         }
       } else {
-        message.error(response?.data?.message || '地点搜索失败');
+        message.error(getMapSearchErrorMessage(response?.data));
       }
     } catch (error: any) {
       console.error('handleSearchMapPoint error:', error);
-      message.error(error?.response?.data?.message || '地点搜索失败');
+      message.error(getMapSearchErrorMessage(error?.response?.data));
     }
   };
 
@@ -377,7 +391,24 @@ function HotelForm() {
             </Form.Item>
 
             <Form.Item
-              label='酒店星级（0-5）'
+              label='酒店星级（1-5整数）'
+              name='starLevel'
+              rules={[
+                {
+                  validator: (_: unknown, value: string | number) => {
+                    if (value === undefined || value === null || value === '') return Promise.resolve();
+                    const parsed = Number(value);
+                    if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 5) return Promise.resolve();
+                    return Promise.reject(new Error('星级必须是 1 到 5 的整数'));
+                  },
+                },
+              ]}
+            >
+              <Input type='number' step='1' min={1} max={5} placeholder='例如：4（表示4钻）' />
+            </Form.Item>
+
+            <Form.Item
+              label='酒店评分（0-5，可小数）'
               name='rating'
               rules={[
                 {
@@ -385,7 +416,7 @@ function HotelForm() {
                     if (value === undefined || value === null || value === '') return Promise.resolve();
                     const score = Number(value);
                     if (Number.isFinite(score) && score >= 0 && score <= 5) return Promise.resolve();
-                    return Promise.reject(new Error('星级必须在 0 到 5 之间'));
+                    return Promise.reject(new Error('评分必须在 0 到 5 之间'));
                   },
                 },
               ]}

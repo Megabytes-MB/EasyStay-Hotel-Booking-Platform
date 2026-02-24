@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { Layout, Button, Table, Space, message, Popconfirm, Tag, Menu, Spin } from 'antd';
+import { Layout, Button, Table, Space, message, Popconfirm, Tag, Menu, Spin, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined } from '@ant-design/icons';
 import { useApi } from '../hooks/useApi';
+import { API_ENDPOINTS } from '../config';
 
 const { Header, Sider, Content } = Layout;
 
@@ -11,6 +12,7 @@ interface Hotel {
   id: string;
   name: string;
   city: string;
+  starLevel?: number;
   pricePerNight: number;
   totalRooms: number;
   status: 'draft' | 'pending' | 'approved' | 'rejected' | string;
@@ -100,9 +102,25 @@ function HotelList() {
     }
   }, [put, user.role, user.id, fetchHotels]);
 
+  const handleUpdateStarLevel = useCallback(async (id: string, starLevel: number) => {
+    try {
+      await put(API_ENDPOINTS.hotels.updateStarLevel(id), { starLevel });
+      message.success('酒店钻级更新成功');
+      fetchHotels();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || '酒店钻级更新失败');
+    }
+  }, [put, fetchHotels]);
+
   const columns = [
     { title: '酒店名称', dataIndex: 'name', key: 'name' },
     { title: '城市', dataIndex: 'city', key: 'city' },
+    {
+      title: '钻级',
+      dataIndex: 'starLevel',
+      key: 'starLevel',
+      render: (starLevel?: number) => (Number.isInteger(starLevel) ? `${starLevel}钻` : '-'),
+    },
     {
       title: '价格/晚',
       dataIndex: 'pricePerNight',
@@ -164,6 +182,14 @@ function HotelList() {
               >
                 通过广告
               </Button>
+              <Select
+                size='small'
+                value={record.starLevel || undefined}
+                placeholder='设置钻级'
+                style={{ width: 110 }}
+                options={[1, 2, 3, 4, 5].map(level => ({ label: `${level}钻`, value: level }))}
+                onChange={(value: number) => handleUpdateStarLevel(record.id, value)}
+              />
               <Button
                 danger
                 size='small'
