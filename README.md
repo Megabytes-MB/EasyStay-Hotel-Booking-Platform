@@ -122,7 +122,55 @@ npm run dev
 - `GET /api/hotels` - 获取酒店列表
 - `POST /api/hotels` - 新增酒店
 - `PUT /api/hotels/:id` - 编辑/审核酒店
+- `POST /api/hotels/upload-image` - 上传酒店图片并返回 URL
+- `PUT /api/hotels/:id/images` - 更新酒店图片列表
+- `PUT /api/hotels/:id/star-level` - 更新酒店星级（1-5）
 - `DELETE /api/hotels/:id` - 删除酒店
+
+#### 酒店字段说明（新增/编辑）
+
+- `rating`：住客评分，范围 `0-5`，可带小数（如 `4.6`）
+- `starLevel`：酒店星级，范围 `1-5`，必须是整数（如 `4`）
+- `images`：酒店图片 URL 数组（最多 20 张）
+
+上传图片示例（商户/管理员登录后）：
+
+```bash
+curl -X POST http://localhost:3000/api/hotels/upload-image \
+	-H "Authorization: Bearer <token>" \
+	-F "image=@./hotel.jpg"
+```
+
+返回示例：
+
+```json
+{
+	"code": 200,
+	"message": "图片上传成功",
+	"data": {
+		"url": "http://localhost:3000/uploads/hotels/hotel-xxxx.jpg"
+	}
+}
+```
+
+示例：
+
+```json
+{
+	"name": "易宿精选酒店·静安店",
+	"city": "上海",
+	"location": "静安区南京西路 100 号",
+	"longitude": 121.456789,
+	"latitude": 31.234567,
+	"pricePerNight": 599,
+	"rating": 4.7,
+	"starLevel": 4,
+	"images": [
+		"https://example.com/hotel-1.jpg",
+		"https://example.com/hotel-2.jpg"
+	]
+}
+```
 
 ### 预订相关
 - `GET /api/bookings` - 获取预订列表

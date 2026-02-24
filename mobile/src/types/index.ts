@@ -46,6 +46,8 @@ export interface Hotel {
   id: number
   /** 酒店名称 */
   name: string
+  /** 酒店星级（1-5星） */
+  starLevel?: number
   /** 所在城市 */
   city: string
   /** 详细地址 */

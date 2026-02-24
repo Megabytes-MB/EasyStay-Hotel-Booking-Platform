@@ -1,9 +1,36 @@
 const express = require('express');
 const { Op } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const { Hotel, User } = require('../models');
 const { authenticateToken, optionalAuthenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
+
+const uploadDir = path.join(__dirname, '..', 'uploads', 'hotels');
+fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    cb(null, `hotel-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+      return cb(new Error('仅支持上传图片文件'));
+    }
+    return cb(null, true);
+  },
+});
 
 const parseCoordinate = value => {
   if (value === undefined || value === null || value === '') {
@@ -18,6 +45,39 @@ const parseCoordinate = value => {
 
 const isValidLatitude = value => Number.isFinite(value) && value >= -90 && value <= 90;
 const isValidLongitude = value => Number.isFinite(value) && value >= -180 && value <= 180;
+
+const normalizeImageUrls = value => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const normalized = value
+    .map(item => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+
+  if (normalized.length > 20) {
+    return null;
+  }
+
+  return normalized;
+};
+
+const parseStarLevel = value => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  const star = Number(value);
+  if (!Number.isInteger(star) || star < 1 || star > 5) {
+    return null;
+  }
+
+  return star;
+};
 
 /**
  * GET /api/hotels
@@ -146,6 +206,45 @@ router.get('/home-ad', async (_req, res) => {
 });
 
 /**
+ * POST /api/hotels/upload-image
+ * 上传酒店图片并返回可访问 URL（商户/管理员）
+ */
+router.post('/upload-image', authenticateToken, (req, res) => {
+  if (!['merchant', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({
+      code: 403,
+      message: '仅商户或管理员可上传酒店图片',
+    });
+  }
+
+  return upload.single('image')(req, res, error => {
+    if (error) {
+      return res.status(400).json({
+        code: 400,
+        message: error.message || '图片上传失败',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        code: 400,
+        message: '请上传图片文件（字段名：image）',
+      });
+    }
+
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/hotels/${req.file.filename}`;
+    return res.json({
+      code: 200,
+      message: '图片上传成功',
+      data: {
+        url: imageUrl,
+        filename: req.file.filename,
+      },
+    });
+  });
+});
+
+/**
  * GET /api/hotels/:id
  * 获取单个酒店详情
  */
@@ -203,6 +302,7 @@ router.post('/', authenticateToken, async (req, res) => {
       longitude,
       latitude,
       rating,
+      starLevel,
       pricePerNight,
       totalRooms,
       availableRooms,
@@ -249,6 +349,22 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     }
 
+    const normalizedImages = normalizeImageUrls(images);
+    if (normalizedImages === null) {
+      return res.status(400).json({
+        code: 400,
+        message: '酒店图片必须为字符串数组，且最多 20 张',
+      });
+    }
+
+    const parsedStarLevel = parseStarLevel(starLevel);
+    if (parsedStarLevel === null) {
+      return res.status(400).json({
+        code: 400,
+        message: '酒店星级必须是 1-5 的整数',
+      });
+    }
+
     const hotel = await Hotel.create({
       name,
       description,
@@ -257,11 +373,12 @@ router.post('/', authenticateToken, async (req, res) => {
       longitude: parsedLongitude,
       latitude: parsedLatitude,
       rating: rating || 0,
+      starLevel: parsedStarLevel,
       pricePerNight,
       totalRooms: totalRooms || 0,
       availableRooms: availableRooms || 0,
       phoneNumber,
-      images: images || [],
+      images: normalizedImages || [],
       amenities: amenities || [],
       status: 'pending',
       merchantId: req.user.id,
@@ -328,6 +445,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       longitude,
       latitude,
       rating,
+      starLevel,
       pricePerNight,
       totalRooms,
       availableRooms,
@@ -365,6 +483,22 @@ router.put('/:id', authenticateToken, async (req, res) => {
       });
     }
 
+    const normalizedImages = normalizeImageUrls(images);
+    if (normalizedImages === null) {
+      return res.status(400).json({
+        code: 400,
+        message: '酒店图片必须为字符串数组，且最多 20 张',
+      });
+    }
+
+    const parsedStarLevel = parseStarLevel(starLevel);
+    if (parsedStarLevel === null) {
+      return res.status(400).json({
+        code: 400,
+        message: '酒店星级必须是 1-5 的整数',
+      });
+    }
+
     if (req.user.role === 'merchant') {
       if (name !== undefined) hotel.name = name;
       if (description !== undefined) hotel.description = description;
@@ -373,11 +507,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
       if (parsedLongitude !== undefined) hotel.longitude = parsedLongitude;
       if (parsedLatitude !== undefined) hotel.latitude = parsedLatitude;
       if (rating !== undefined) hotel.rating = rating;
+      if (parsedStarLevel !== undefined) hotel.starLevel = parsedStarLevel;
       if (pricePerNight !== undefined) hotel.pricePerNight = pricePerNight;
       if (totalRooms !== undefined) hotel.totalRooms = totalRooms;
       if (availableRooms !== undefined) hotel.availableRooms = availableRooms;
       if (phoneNumber !== undefined) hotel.phoneNumber = phoneNumber;
-      if (images !== undefined) hotel.images = images;
+      if (normalizedImages !== undefined) hotel.images = normalizedImages;
       if (amenities !== undefined) hotel.amenities = amenities;
     }
 
@@ -410,6 +545,100 @@ router.put('/:id', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Update hotel error:', error);
+    return res.status(500).json({
+      code: 500,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * PUT /api/hotels/:id/images
+ * 更新酒店图片列表（商户仅可更新自己的酒店；管理员可更新任意酒店）
+ */
+router.put('/:id/images', authenticateToken, async (req, res) => {
+  try {
+    const hotel = await Hotel.findByPk(req.params.id);
+
+    if (!hotel) {
+      return res.status(404).json({
+        code: 404,
+        message: '酒店不存在',
+      });
+    }
+
+    if (!(req.user.role === 'admin' || (req.user.role === 'merchant' && hotel.merchantId === req.user.id))) {
+      return res.status(403).json({
+        code: 403,
+        message: '无权限编辑该酒店图片',
+      });
+    }
+
+    const normalizedImages = normalizeImageUrls(req.body?.images);
+    if (normalizedImages === null || normalizedImages === undefined) {
+      return res.status(400).json({
+        code: 400,
+        message: 'images 必须为字符串数组，且最多 20 张',
+      });
+    }
+
+    hotel.images = normalizedImages;
+    await hotel.save();
+
+    return res.json({
+      code: 200,
+      message: '酒店图片更新成功',
+      data: hotel,
+    });
+  } catch (error) {
+    console.error('Update hotel images error:', error);
+    return res.status(500).json({
+      code: 500,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * PUT /api/hotels/:id/star-level
+ * 更新酒店星级（1-5整数；商户仅可更新自己的酒店；管理员可更新任意酒店）
+ */
+router.put('/:id/star-level', authenticateToken, async (req, res) => {
+  try {
+    const hotel = await Hotel.findByPk(req.params.id);
+
+    if (!hotel) {
+      return res.status(404).json({
+        code: 404,
+        message: '酒店不存在',
+      });
+    }
+
+    if (!(req.user.role === 'admin' || (req.user.role === 'merchant' && hotel.merchantId === req.user.id))) {
+      return res.status(403).json({
+        code: 403,
+        message: '无权限编辑该酒店星级',
+      });
+    }
+
+    const parsedStarLevel = parseStarLevel(req.body?.starLevel);
+    if (parsedStarLevel === null || parsedStarLevel === undefined) {
+      return res.status(400).json({
+        code: 400,
+        message: 'starLevel 必须是 1-5 的整数',
+      });
+    }
+
+    hotel.starLevel = parsedStarLevel;
+    await hotel.save();
+
+    return res.json({
+      code: 200,
+      message: '酒店星级更新成功',
+      data: hotel,
+    });
+  } catch (error) {
+    console.error('Update hotel star level error:', error);
     return res.status(500).json({
       code: 500,
       message: error.message,

@@ -53,6 +53,15 @@ const Hotel = sequelize.define('Hotel', {
       max: 5,
     },
   },
+  starLevel: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: 1,
+      max: 5,
+      isInt: true,
+    },
+  },
   pricePerNight: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

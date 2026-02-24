@@ -10,9 +10,10 @@ import {
   List,
   Space,
   Typography,
+  Upload,
   message,
 } from 'antd';
-import { EnvironmentOutlined, SearchOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import { API_ENDPOINTS } from '../config';
@@ -41,6 +42,7 @@ function HotelForm() {
   const [mapKeyword, setMapKeyword] = useState('');
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const user = useMemo(() => {
     try {
@@ -66,7 +68,10 @@ function HotelForm() {
         return;
       }
 
-      form.setFieldsValue(hotel);
+      form.setFieldsValue({
+        ...hotel,
+        imagesText: Array.isArray(hotel.images) ? hotel.images.join('\n') : '',
+      });
       const lng = Number(hotel.longitude);
       const lat = Number(hotel.latitude);
       if (Number.isFinite(lng) && Number.isFinite(lat)) {
@@ -153,9 +158,16 @@ function HotelForm() {
       return;
     }
 
+    const images = String(values.imagesText || '')
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
     const payload = {
       ...values,
+      images,
     };
+    delete payload.imagesText;
     if (hasCoordinate) {
       payload.longitude = longitude;
       payload.latitude = latitude;
@@ -187,6 +199,43 @@ function HotelForm() {
     } catch (error: any) {
       message.error(error?.response?.data?.message || '提交失败');
     }
+  };
+
+  const handleUploadImage = async (file: File) => {
+    if (!file.type || !file.type.startsWith('image/')) {
+      message.error('请上传图片文件（jpg/png/webp 等）');
+      return false;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('图片大小不能超过 5MB');
+      return false;
+    }
+
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await api.post(API_ENDPOINTS.hotels.uploadImage, formData);
+
+      const uploadedUrl = response?.data?.data?.url;
+      if (!uploadedUrl) {
+        message.error('上传成功但未返回图片地址');
+        return;
+      }
+
+      const previous = String(form.getFieldValue('imagesText') || '').trim();
+      const nextValue = previous ? `${previous}\n${uploadedUrl}` : uploadedUrl;
+      form.setFieldsValue({ imagesText: nextValue });
+      message.success('图片上传成功，已自动填入 URL');
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || '图片上传失败');
+    } finally {
+      setUploadingImage(false);
+    }
+
+    return false;
   };
 
   return (
@@ -325,6 +374,42 @@ function HotelForm() {
               ]}
             >
               <Input type='number' placeholder='例如：599' />
+            </Form.Item>
+
+            <Form.Item
+              label='酒店星级评分（0-5）'
+              name='rating'
+              rules={[
+                {
+                  validator: (_: unknown, value: string | number) => {
+                    if (value === undefined || value === null || value === '') return Promise.resolve();
+                    const score = Number(value);
+                    if (Number.isFinite(score) && score >= 0 && score <= 5) return Promise.resolve();
+                    return Promise.reject(new Error('评分必须在 0 到 5 之间'));
+                  },
+                },
+              ]}
+            >
+              <Input type='number' step='0.1' min={0} max={5} placeholder='例如：4.6' />
+            </Form.Item>
+
+            <Form.Item label='酒店图片 URL（每行一条，或逗号分隔）' name='imagesText'>
+              <Input.TextArea
+                rows={4}
+                placeholder={'https://example.com/hotel1.jpg\nhttps://example.com/hotel2.jpg'}
+              />
+            </Form.Item>
+
+            <Form.Item label='上传酒店图片'>
+              <Upload
+                accept='image/*'
+                showUploadList={false}
+                beforeUpload={(file) => handleUploadImage(file as File)}
+              >
+                <Button icon={<UploadOutlined />} loading={uploadingImage}>
+                  选择图片并上传
+                </Button>
+              </Upload>
             </Form.Item>
 
             <Form.Item

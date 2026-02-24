@@ -1,6 +1,8 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
+const mysql = require('mysql2/promise');
 const sequelize = require('./config/database');
 const { User, Hotel, Booking } = require('./models');
 
@@ -15,10 +17,34 @@ const holidayRoutes = require('./routes/holidays');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const ensureDatabaseExists = async () => {
+  const host = process.env.DB_HOST;
+  const port = Number(process.env.DB_PORT || 3306);
+  const user = process.env.DB_USER;
+  const password = process.env.DB_PASSWORD;
+  const database = process.env.DB_NAME;
+
+  if (!host || !user || !database) {
+    throw new Error('数据库环境变量不完整，请检查 DB_HOST/DB_USER/DB_NAME');
+  }
+
+  const connection = await mysql.createConnection({
+    host,
+    port,
+    user,
+    password,
+    multipleStatements: false,
+  });
+
+  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  await connection.end();
+};
+
 // ==================== 中间件配置 ====================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ==================== API 路由 ====================
 // 测试接口
@@ -57,6 +83,9 @@ app.use((err, req, res, next) => {
 // ==================== 数据库同步与启动 ====================
 const startServer = async () => {
   try {
+    await ensureDatabaseExists();
+    console.log('✅ Database ensured successfully.');
+
     // 测试数据库连接
     await sequelize.authenticate();
     console.log('✅ Database connection has been established successfully.');

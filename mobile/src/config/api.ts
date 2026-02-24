@@ -34,6 +34,8 @@ export const API_PATHS = {
   HOTEL_HOME_AD: '/api/hotels/home-ad',
   HOTEL_HOME_ADS: '/api/hotels/home-ads',
   HOTEL_DETAIL: (id: number) => `/api/hotels/${id}`,
+  HOTEL_UPDATE_IMAGES: (id: number) => `/api/hotels/${id}/images`,
+  HOTEL_UPDATE_STAR_LEVEL: (id: number) => `/api/hotels/${id}/star-level`,
 
   // 预订
   BOOKINGS: '/api/bookings',

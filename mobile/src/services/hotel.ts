@@ -12,6 +12,7 @@ export interface Hotel {
   id: number
   name: string
   city: string
+  starLevel?: number
   longitude?: number
   latitude?: number
   address?: string
@@ -92,6 +93,7 @@ const transformHotelData = (hotel: any): Hotel => {
     longitude: toNumberOr(hotel.longitude ?? hotel.lng, 121.4737),
     latitude: toNumberOr(hotel.latitude ?? hotel.lat, 31.2304),
     city: hotel.city || '未知',
+    starLevel: hotel.starLevel ? Number(hotel.starLevel) : undefined,
     address: hotel.address || hotel.location,
     description: hotel.description,
     price: Number(hotel.pricePerNight || hotel.price || rooms[0]?.price || 200),

@@ -14,6 +14,9 @@ export const API_ENDPOINTS = {
     detail: (id: string) => `/api/hotels/${id}`,
     create: '/api/hotels',
     update: (id: string) => `/api/hotels/${id}`,
+    uploadImage: '/api/hotels/upload-image',
+    updateImages: (id: string) => `/api/hotels/${id}/images`,
+    updateStarLevel: (id: string) => `/api/hotels/${id}/star-level`,
     delete: (id: string) => `/api/hotels/${id}`,
   },
   // 预订

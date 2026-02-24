@@ -77,8 +77,14 @@ export const request = async <T = any>(
       return result
     }
 
+    const errorMessage = String(result.message || '')
+    const isTokenExpiredError =
+      result.code === 401 ||
+      response.statusCode === 401 ||
+      (result.code === 403 && /token|auth|expired|登录/i.test(errorMessage))
+
     // 业务错误
-    if (result.code === 401) {
+    if (isTokenExpiredError) {
       // token 失效，清除登录状态
       Taro.removeStorageSync('easy-stay-auth')
       Taro.showToast({
