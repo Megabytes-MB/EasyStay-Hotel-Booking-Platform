@@ -237,7 +237,7 @@ const HotelDetail = () => {
         ))}
       </View>
 
-      {!isLogin && <View className='login-tip'>登录后可查看会员价与收藏记录</View>}
+      {!isLogin && <View className='login-tip'>登录后可查看收藏记录</View>}
 
       <CustomCalendar
         visible={calendarVisible}

@@ -9,7 +9,7 @@ export default defineAppConfig({
   ],
   window: {
     backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#fff',
+    navigationBarBackgroundColor: '#f4f8ff',
     navigationBarTitleText: 'Easy Stay 出行',
     navigationBarTextStyle: 'black'
   },
@@ -20,8 +20,10 @@ export default defineAppConfig({
   },
   requiredPrivateInfos: ['getLocation'],
   tabBar: {
-    color: '#999',
-    selectedColor: '#1890ff',
+    color: '#6b7280',
+    selectedColor: '#1677ff',
+    borderStyle: 'white',
+    backgroundColor: '#ffffff',
     list: [
       {
         pagePath: 'pages/home/index',

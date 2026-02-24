@@ -6,7 +6,6 @@ import VirtualList from '../../components/VirtualList'
 import CustomCalendar from '../../components/CustomCalendar'
 import { fetchHotels, Hotel } from '../../services/hotel'
 import { resolveSearchLocationPoint } from '../../services/map'
-import { useAuthStore } from '../../store/useAuthStore'
 import { formatPrice } from '../../utils/format'
 import './index.scss'
 
@@ -125,7 +124,6 @@ const calculateDistanceKm = (
 
 const HotelList = () => {
   const router = useRouter()
-  const { isLogin } = useAuthStore()
   const routeParams = (router?.params || {}) as Record<string, string>
 
   const initialCity = decodeSafe(routeParams.city || '')
@@ -495,7 +493,8 @@ const HotelList = () => {
             </View>
           </View>
           <View className='toggle-filter right' onClick={() => setShowFilter(prev => !prev)}>
-            {showFilter ? '收起详细筛选' : '展开详细筛选'}
+            <View className='toggle-filter-icon' />
+            <Text className='toggle-filter-arrow'>{showFilter ? '▴' : '▾'}</Text>
           </View>
         </View>
       </View>
@@ -634,7 +633,6 @@ const HotelList = () => {
               <Text className='score'>{item.score.toFixed(1)} 分</Text>
               <View className='price-row'>
                 <Text className='price'>{formatPrice(item.price)} 起</Text>
-                {isLogin && item.isMemberDeal && <Text className='member-tag'>会员价</Text>}
               </View>
             </View>
           </View>

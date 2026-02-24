@@ -1,7 +1,7 @@
 .city-picker-page {
   min-height: 100vh;
   padding: 0;
-  background: #f5f5f5;
+  background: #f4f8ff;
 }
 
 .picker-header {
@@ -9,14 +9,14 @@
   top: 0;
   z-index: 20;
   padding: 0 24px 12px;
-  background: #f5f5f5;
+  background: rgba(244, 248, 255, 0.94);
 }
 
 .header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .back-btn,
@@ -25,14 +25,14 @@
   height: 56px;
   line-height: 56px;
   text-align: center;
-  color: #2f2f2f;
+  color: #334155;
   font-size: 44px;
 }
 
 .header-title {
-  font-size: 42px;
-  font-weight: 600;
-  color: #1f2329;
+  font-size: 34px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .search-box {
@@ -41,51 +41,61 @@
   align-items: center;
   gap: 10px;
   border-radius: 999px;
-  background: #ededed;
+  border: 1px solid #dce8f7;
+  background: #fff;
   padding: 0 24px;
 }
 
 .search-icon {
   font-size: 24px;
-  color: #a0a0a0;
+  color: #94a3b8;
 }
 
 .search-box input {
   flex: 1;
   height: 72px;
-  font-size: 26px;
-  color: #333;
+  color: #0f172a;
 }
 
 .tab-row {
-  margin-top: 14px;
+  margin-top: 12px;
   display: flex;
+  padding: 6px;
+  border-radius: 14px;
+  background: #eaf1fb;
 }
 
 .tab-item {
   position: relative;
   flex: 1;
   text-align: center;
-  color: #a1a1a1;
-  padding: 12px 0 14px;
-  font-size: 30px;
-  font-weight: 500;
+  color: #64748b;
+  padding: 12px 0;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: 600;
 }
 
 .tab-item.active {
-  color: #39a355;
+  color: #0d5ad8;
+  background: #fff;
+  box-shadow: 0 8px 14px rgba(22, 119, 255, 0.12);
 }
 
 .tab-item.active::after {
   content: '';
   position: absolute;
   left: 50%;
-  bottom: 0;
-  width: 42px;
-  height: 6px;
+  bottom: 4px;
+  width: 36px;
+  height: 4px;
   border-radius: 999px;
-  background: #39a355;
+  background: #1677ff;
   transform: translateX(-50%);
+}
+
+.picker-content {
+  padding-bottom: 20px;
 }
 
 .content-wrap {
@@ -93,7 +103,7 @@
 }
 
 .section {
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
 .section-head {
@@ -104,86 +114,90 @@
 
 .section-title {
   display: block;
-  font-size: 42px;
-  font-weight: 500;
-  color: #2b2b2b;
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .clear-btn {
-  color: #7f7f7f;
-  font-size: 30px;
+  color: #64748b;
+  font-size: 22px;
 }
 
 .single-city {
-  margin-top: 14px;
+  margin-top: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .locate-btn {
-  min-width: 84px;
-  height: 64px;
-  border-radius: 6px;
-  background: #def3e4;
-  color: #2f9d51;
-  font-size: 24px;
+  min-width: 90px;
+  height: 62px;
+  border-radius: 12px;
+  border: 1px solid #b7d5ff;
+  background: #e8f2ff;
+  color: #0d5ad8;
+  font-size: 22px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .locate-btn.loading {
-  background: #ececec;
-  color: #7f7f7f;
+  background: #eceff4;
+  border-color: #dbe2eb;
+  color: #8093ab;
 }
 
 .city-grid,
 .index-grid {
-  margin-top: 14px;
+  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .city-chip,
 .index-chip {
-  min-height: 64px;
-  border-radius: 6px;
-  background: #ececec;
+  min-height: 62px;
+  border-radius: 12px;
+  border: 1px solid #dce8f7;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  color: #383838;
+  font-size: 24px;
+  color: #334155;
 }
 
 .city-chip.located {
-  width: 156px;
+  width: 170px;
   justify-content: flex-start;
-  padding-left: 22px;
+  padding-left: 20px;
   gap: 8px;
-  color: #2d2d2d;
+  color: #0f172a;
 }
 
 .location-dot {
-  color: #3db55d;
+  color: #16a34a;
   font-size: 18px;
 }
 
 .empty-text {
-  margin-top: 12px;
-  font-size: 26px;
-  color: #9a9a9a;
+  margin-top: 10px;
+  font-size: 22px;
+  color: #8a98ac;
 }
 
 .search-section {
-  padding: 20px 24px 30px;
+  padding: 18px 24px 30px;
 }
 
 .side-index {
   position: fixed;
-  top: 280px;
+  top: 290px;
   right: 8px;
   z-index: 30;
   display: flex;
@@ -194,14 +208,14 @@
 
 .side-index-item {
   width: 40px;
-  line-height: 32px;
+  line-height: 30px;
   text-align: center;
-  font-size: 24px;
-  color: #9a9a9a;
+  font-size: 20px;
+  color: #8fa0b7;
 }
 
 .side-index-item.active {
   border-radius: 999px;
-  background: #282828;
+  background: #1677ff;
   color: #fff;
 }
