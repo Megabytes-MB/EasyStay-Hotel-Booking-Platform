@@ -631,7 +631,10 @@ const HotelList = () => {
             <Image className='thumb' src={item.thumb} />
             <View className='info'>
               <Text className='name'>{item.name}</Text>
-              <Text className='score'>{item.score.toFixed(1)} 分</Text>
+              <Text className='score'>
+                {item.starLevel ? `${item.starLevel}钻 · ` : ''}
+                {item.score.toFixed(1)} 分
+              </Text>
               <View className='price-row'>
                 <Text className='price'>{formatPrice(item.price)} 起</Text>
                 {isLogin && item.isMemberDeal && <Text className='member-tag'>会员价</Text>}

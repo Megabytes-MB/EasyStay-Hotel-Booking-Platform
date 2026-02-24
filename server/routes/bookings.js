@@ -203,6 +203,24 @@ router.post('/', authenticateToken, async (req, res) => {
       remarks,
     } = req.body;
 
+    const currentUserId = Number(req.user?.id);
+    if (!Number.isInteger(currentUserId) || currentUserId <= 0) {
+      return res.status(401).json({
+        code: 401,
+        message: '登录状态无效，请重新登录',
+      });
+    }
+
+    const currentUser = await User.findByPk(currentUserId, {
+      attributes: ['id'],
+    });
+    if (!currentUser) {
+      return res.status(401).json({
+        code: 401,
+        message: '账号不存在或登录已过期，请重新登录',
+      });
+    }
+
     const missingFields = [];
     if (!hotelId) missingFields.push('hotelId');
     if (!guestName) missingFields.push('guestName');
@@ -256,7 +274,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
     const booking = await Booking.create({
       hotelId,
-      userId: req.user.id,
+      userId: currentUserId,
       guestName,
       // 手机号未填写时给默认值，避免前端无输入框时直接失败
       guestPhone: guestPhone || '未填写',

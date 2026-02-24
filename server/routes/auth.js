@@ -21,8 +21,20 @@ const wechatAccessTokenCache = {
   expiresAt: 0,
 };
 
+const isPlaceholderWechatConfigValue = value => {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return true;
+  return (
+    normalized === 'your_wechat_appid' ||
+    normalized === 'your_wechat_secret' ||
+    normalized === 'replace_with_real_wechat_appid' ||
+    normalized === 'replace_with_real_wechat_secret'
+  );
+};
+
 const hasWechatConfig = () =>
-  Boolean(process.env.WECHAT_APPID && process.env.WECHAT_SECRET);
+  !isPlaceholderWechatConfigValue(process.env.WECHAT_APPID) &&
+  !isPlaceholderWechatConfigValue(process.env.WECHAT_SECRET);
 
 const isProdEnv = () => process.env.NODE_ENV === 'production';
 
@@ -468,9 +480,20 @@ router.post('/wechat-login', async (req, res) => {
     });
   } catch (error) {
     console.error('WeChat login error:', error);
-    return res.status(500).json({
-      code: 500,
-      message: error.message || '微信登录失败',
+
+    const errorMessage = String(error.message || '微信登录失败');
+    const isWechatUpstreamError =
+      /code2session|getuserphonenumber|get access_token|invalid appid|invalid secret|rid:/i.test(
+        errorMessage
+      );
+
+    const statusCode = isWechatUpstreamError ? 502 : 500;
+
+    return res.status(statusCode).json({
+      code: statusCode,
+      message: isWechatUpstreamError
+        ? '微信服务配置异常，请联系管理员或改用账号密码登录'
+        : errorMessage,
     });
   }
 });

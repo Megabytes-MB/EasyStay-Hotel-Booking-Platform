@@ -29,6 +29,16 @@ interface GeoPoint {
   latitude: number
 }
 
+const toFiniteNumber = (value: unknown, fallback: number) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+const isValidCoordinate = (longitude: number, latitude: number) => {
+  if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return false
+  return longitude >= -180 && longitude <= 180 && latitude >= -90 && latitude <= 90
+}
+
 const HotelDetail = () => {
   const { id } = useRouter().params
   const { isLogin, userInfo, toggleFavorite } = useAuthStore()
@@ -47,16 +57,22 @@ const HotelDetail = () => {
 
   const hotelPoint = useMemo<GeoPoint>(
     () => ({
-      longitude: detail?.longitude || 121.4737,
-      latitude: detail?.latitude || 31.2304,
+      longitude: toFiniteNumber(detail?.longitude, 121.4737),
+      latitude: toFiniteNumber(detail?.latitude, 31.2304),
     }),
     [detail]
   )
 
-  const mapCenter = userLocation || hotelPoint
+  const mapCenter = useMemo<GeoPoint>(() => {
+    if (!userLocation) return hotelPoint
+    if (!Number.isFinite(userLocation.longitude) || !Number.isFinite(userLocation.latitude)) {
+      return hotelPoint
+    }
+    return userLocation
+  }, [hotelPoint, userLocation])
 
-  const mapMarkers = useMemo(
-    () => [
+  const mapMarkers = useMemo(() => {
+    const markers = [
       {
         id: 1,
         latitude: hotelPoint.latitude,
@@ -77,9 +93,16 @@ const HotelDetail = () => {
             },
           ]
         : []),
-    ],
-    [detail?.name, hotelPoint.latitude, hotelPoint.longitude, userLocation]
-  )
+    ]
+
+    return markers.filter(marker => isValidCoordinate(marker.longitude, marker.latitude))
+  }, [detail?.name, hotelPoint.latitude, hotelPoint.longitude, userLocation])
+
+  const canRenderMap = useMemo(() => {
+    if (!isValidCoordinate(mapCenter.longitude, mapCenter.latitude)) return false
+    if (!isValidCoordinate(hotelPoint.longitude, hotelPoint.latitude)) return false
+    return mapMarkers.length > 0
+  }, [hotelPoint.latitude, hotelPoint.longitude, mapCenter.latitude, mapCenter.longitude, mapMarkers.length])
 
   const openCalendarForRoom = (room: Room) => {
     setSelectedRoom(room)
@@ -128,6 +151,10 @@ const HotelDetail = () => {
   const handleLocateUser = async () => {
     try {
       const res = await Taro.getLocation({ type: 'gcj02' })
+      if (!Number.isFinite(res.longitude) || !Number.isFinite(res.latitude)) {
+        throw new Error('定位坐标无效')
+      }
+
       setUserLocation({ longitude: res.longitude, latitude: res.latitude })
       Taro.showToast({ title: '定位成功', icon: 'success' })
     } catch {
@@ -171,22 +198,25 @@ const HotelDetail = () => {
           </LoginGuard>
         </View>
         <Text className='muted'>
-          评分 {detail.score.toFixed(1)} · {detail.city}
+          {detail.starLevel ? `${detail.starLevel}钻 · ` : ''}评分 {detail.score.toFixed(1)} · {detail.city}
         </Text>
       </View>
 
       <View className='card map-card'>
         <Text className='section-title'>位置与导航</Text>
         <Text className='muted'>{detail.address || `${detail.city}市中心`}</Text>
-        <Map
-          id='hotel-map'
-          className='hotel-map'
-          longitude={mapCenter.longitude}
-          latitude={mapCenter.latitude}
-          scale={14}
-          markers={mapMarkers as any}
-          showLocation
-        />
+        {canRenderMap ? (
+          <Map
+            id='hotel-map'
+            className='hotel-map'
+            longitude={mapCenter.longitude}
+            latitude={mapCenter.latitude}
+            scale={14}
+            markers={mapMarkers as any}
+          />
+        ) : (
+          <View className='muted'>地图加载失败，请稍后重试</View>
+        )}
         <View className='map-actions'>
           <Button size='mini' onClick={handleLocateUser}>
             定位到我
