@@ -1,228 +1,145 @@
-```markdown
-# EasyStay 酒店预订管理平台
+# EasyStay Hotel Booking Platform
 
-## 项目介绍
+EasyStay 是一个酒店预订平台示例项目，包含三端：
 
-EasyStay 是一个酒店预订管理平台，包括：
-- **PC 后台管理系统**（该项目）：供酒店商户和管理员使用
-- 支持酒店信息管理、预订查询、收入统计等功能
+- `server/`: Node.js + Express + Sequelize + MySQL 后端 API
+- `admin/`: React + Vite + Ant Design 管理后台（管理员/商户）
+- `mobile/`: Taro + React 微信小程序用户端
 
-## 技术栈
+当前仓库以 `server` 作为统一数据源，`admin` 和 `mobile` 都直接调用后端接口。
 
-### 前端（Admin）
-- React 18 + TypeScript
-- Vite
-- Ant Design
-- React Router
-- Axios
+## 当前能力概览
 
-### 后端（Server）
-- Node.js + Express
-- CORS 跨域支持
+- 多角色账号体系：`admin`、`merchant`、`user`
+- 酒店管理与审核
+- 首页广告位申请与审核（商户申请、管理员审核）
+- 预订下单/查询/状态变更
+- 节假日活动规则管理与自动同步（`/api/holidays/sync`）
+- 节假日折扣价计算（按日命中最低折扣规则）
+- 地图逆地理/地点搜索（腾讯地图，超限时可回退百度地图）
+- 小程序手机号验证码注册、微信手机号一键登录
 
-## 项目结构
+## 目录结构
 
-```
-├── admin/                  # 前端管理系统
-│   ├── src/
-│   │   ├── pages/         # 页面组件
-│   │   ├── components/    # 公共组件
-│   │   ├── hooks/         # 自定义 Hooks
-│   │   ├── config.ts      # 常量配置
-│   │   └── App.tsx        # 应用入口
-│   └── package.json
-│
-├── server/                 # 后端 API
-│   ├── index.js           # 服务器入口
-│   └── package.json
-│
-└── README.md
+```text
+.
+├─ admin/                     # React 管理后台
+├─ mobile/                    # Taro 小程序端
+├─ server/                    # Express API + Sequelize 模型
+├─ packages/shared/           # 预留共享目录（当前为空）
+├─ project.config.json        # 微信开发者工具项目配置（根目录导入）
+└─ README.md
 ```
 
-## 功能模块
+## 环境要求
 
-### 1. 用户认证（5 分）
-- 登录/注册功能
-- 支持商户和管理员两种角色
+- Node.js 18+
+- npm 9+
+- MySQL 8.x（或兼容版本）
 
-### 2. 酒店管理（8 分）
-- CRUD 操作
-- 审核工作流（待审核 → 已批准/已拒绝）
+## 快速启动
 
-### 3. 权限控制（8 分）
-- 基于角色的访问控制（RBAC）
-- 商户只能看自己的数据
-- 管理员可以看所有数据
-
-### 4. 预订查询（8 分）
-- 查看预订列表
-- 预订状态管理
-
-### 5. 收入统计（8 分）
-- 总收入统计
-- 按酒店分类统计
-- 数据可视化
-
-### 6. 交互优化（8 分）
-- Loading 动画
-- 表单验证
-- 错误提示
-
-### 7. 代码整理（8 分）
-- 常量配置
-- 公共 Hooks
-- 代码注释
-
-## 快速开始
-
-### 安装依赖
+### 1. 安装依赖
 
 ```bash
-# 前端
-cd admin
-npm install
+cd server && npm install
+cd ../admin && npm install
+cd ../mobile && npm install
+```
 
-# 后端
+### 2. 配置后端环境变量
+
+```bash
 cd server
-npm install
+cp .env.example .env
 ```
 
-### 启动开发
+至少需要正确配置以下变量：
+
+- 数据库：`DB_HOST` `DB_PORT` `DB_NAME` `DB_USER` `DB_PASSWORD`
+- JWT：`JWT_SECRET`
+- 地图：`TENCENT_MAP_KEY`（建议）和/或 `BAIDU_MAP_AK`
+
+可选能力变量：
+
+- 微信登录：`WECHAT_APPID` `WECHAT_SECRET`
+- 阿里云短信验证码：`ALIBABA_CLOUD_ACCESS_KEY_ID` 等 `ALIYUN_*`
+- 法定节假日同步源：`HOLIDAY_SYNC_URL_TEMPLATE`
+
+### 3. 启动后端
 
 ```bash
-# 后端（3000 端口）
 cd server
 npm run dev
+```
 
-# 前端（5173 端口）
+默认监听 `http://localhost:3000`。服务启动时会自动：
+
+- 检查并创建数据库（若不存在）
+- 执行 Sequelize `sync({ alter: true })`
+
+### 4. 启动管理后台
+
+```bash
 cd admin
 npm run dev
 ```
 
-### 首次使用
+默认地址 `http://localhost:5173`。
 
-1. 打开 `http://localhost:5173/login`
-2. 点"去注册"按钮
-3. 注册一个商户账号（角色选"商户"）
-4. 登录后再注册一个管理员账号（角色选"管理员"）
-
-### 推荐账号
-
-- 商户：`merchant1` / `123456`
-- 管理员：`admin1` / `123456`
-
-
-## API 文档
-
-### 认证相关
-- `POST /api/auth/register` - 注册
-- `POST /api/auth/login` - 登录
-
-### 酒店相关
-- `GET /api/hotels` - 获取酒店列表
-- `POST /api/hotels` - 新增酒店
-- `PUT /api/hotels/:id` - 编辑/审核酒店
-- `POST /api/hotels/upload-image` - 上传酒店图片并返回 URL
-- `PUT /api/hotels/:id/images` - 更新酒店图片列表
-- `PUT /api/hotels/:id/star-level` - 更新酒店星级（1-5）
-- `DELETE /api/hotels/:id` - 删除酒店
-
-#### 酒店字段说明（新增/编辑）
-
-- `rating`：住客评分，范围 `0-5`，可带小数（如 `4.6`）
-- `starLevel`：酒店星级，范围 `1-5`，必须是整数（如 `4`）
-- `images`：酒店图片 URL 数组（最多 20 张）
-
-上传图片示例（商户/管理员登录后）：
+### 5. 启动小程序编译
 
 ```bash
-curl -X POST http://localhost:3000/api/hotels/upload-image \
-	-H "Authorization: Bearer <token>" \
-	-F "image=@./hotel.jpg"
+cd mobile
+npm run dev:weapp
 ```
 
-返回示例：
+然后在微信开发者工具导入仓库根目录（使用根目录 `project.config.json`）。
 
-```json
-{
-	"code": 200,
-	"message": "图片上传成功",
-	"data": {
-		"url": "http://localhost:3000/uploads/hotels/hotel-xxxx.jpg"
-	}
-}
-```
+## 常用脚本
 
-示例：
+### server
 
-```json
-{
-	"name": "易宿精选酒店·静安店",
-	"city": "上海",
-	"location": "静安区南京西路 100 号",
-	"longitude": 121.456789,
-	"latitude": 31.234567,
-	"pricePerNight": 599,
-	"rating": 4.7,
-	"starLevel": 4,
-	"images": [
-		"https://example.com/hotel-1.jpg",
-		"https://example.com/hotel-2.jpg"
-	]
-}
-```
+- `npm run dev`: nodemon 启动
+- `npm run start`: node 启动
+- `npm run db:sync`: 手动同步数据库结构
 
-### 预订相关
-- `GET /api/bookings` - 获取预订列表
-- `POST /api/bookings` - 新增预订
-- `PUT /api/bookings/:id` - 更新预订状态
+### admin
 
-### 统计相关
-- `GET /api/statistics/revenue` - 获取收入统计
+- `npm run dev`: 开发模式
+- `npm run build`: TypeScript 构建检查 + Vite 打包
+- `npm run preview`: 预览构建产物
 
-## 开发指南
+### mobile
 
-### 环境变量
+- `npm run dev:weapp`: 微信小程序开发编译
+- `npm run build:weapp`: 微信小程序生产构建
+- `npm run dev:h5`: H5 开发编译
+- `npm run build:h5`: H5 生产构建
 
-在 `admin/.env` 中配置：
+## API 概览
 
-```
-VITE_API_BASE_URL=http://localhost:3000
-```
+- 认证：`/api/auth/*`
+  - `POST /api/auth/register`
+  - `POST /api/auth/login`
+  - `POST /api/auth/send-code`
+  - `POST /api/auth/wechat-login`
+- 酒店：`/api/hotels/*`
+  - 列表/详情/增删改
+  - 图片上传
+  - 星级更新
+  - 首页广告位申请与审核
+- 预订：`/api/bookings/*`
+- 统计：`GET /api/statistics/revenue`
+- 地图：`/api/map/regeo`、`/api/map/search`
+- 节假日：`/api/holidays/*`、`POST /api/holidays/sync`
 
-### 代码规范
+## 已知注意事项
 
-- 使用 TypeScript 进行类型检查
-- 使用 Ant Design 组件库
-- 遵循 React Hooks 最佳实践
+- `admin/src/config.ts` 中 `API_BASE_URL` 当前写死为 `http://localhost:3000`。
+- 小程序真机调试时不要使用 `localhost`，请改为局域网 IP 并保证手机和电脑同网段。
+- 短信验证码、微信手机号登录依赖真实云配置，未配置时仅能使用账号密码流程。
 
-## 部署
-
-### 前端构建
-
-```bash
-cd admin
-npm run build
-```
-
-### 后端部署
-
-使用 PM2 或其他进程管理工具：
-
-```bash
-pm2 start server/index.js --name "easyStay-api"
-```
-
-## 后续优化方向
-
-1. 使用真实数据库（MySQL/MongoDB）
-2. 实现 JWT 认证
-3. 添加图片上传功能
-4. 集成支付接口
-5. 小程序用户端开发
-6. 单元测试和集成测试
-
-## 许可证
+## License
 
 MIT
-```

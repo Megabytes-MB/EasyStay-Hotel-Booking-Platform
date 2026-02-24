@@ -1,41 +1,46 @@
 # EasyStay Mobile（微信小程序端）
 
-## 项目介绍
-
-`mobile/` 是 EasyStay 的用户端小程序工程，基于 Taro + React + TypeScript 开发，主要面向酒店浏览、搜索筛选、下单预订和个人中心场景。
-
-当前版本已支持：
-- 首页广告位酒店展示
-- 城市选择页（搜索/历史/热门/字母索引）
-- 进入城市页自动定位
-- 酒店列表筛选（房型、价格、日期）
-- 酒店详情、收藏、下单
+`mobile/` 是 EasyStay 的用户端工程，基于 Taro + React + TypeScript，面向酒店浏览、筛选、详情、下单和个人中心。
 
 ## 技术栈
 
-- Taro 3.x（微信小程序/H5）
-- React 18 + TypeScript
+- Taro 3.x
+- React 18
+- TypeScript
 - Zustand（状态管理）
-- Sass（样式）
-- dayjs（日期处理）
+- Sass
+- dayjs
 
-## 项目结构
+## 当前功能
+
+- 首页城市选择与搜索入口
+- 首页广告位酒店轮播（后端 `home-ads`）
+- 城市选择页（历史记录、热门、字母索引、定位反查）
+- 酒店列表筛选（价格、星级、房型、标签、日期）
+- 按评分/价格/距离排序（距离排序依赖地图搜索定位）
+- 酒店详情（轮播、收藏、地图、导航、房型选择）
+- 预订下单（联动后端节假日折扣规则）
+- 登录注册（账号密码、短信验证码、微信手机号一键登录）
+- 个人中心（收藏、订单列表、订单移除）
+
+## 目录结构
 
 ```text
 mobile/
-├── config/                      # Taro 构建配置（dev/prod）
-├── src/
-│   ├── app.tsx                  # 应用入口
-│   ├── app.config.ts            # 小程序路由与全局配置
-│   ├── config/api.ts            # API 路径常量
-│   ├── services/                # 业务请求层（auth/hotel/booking/map）
-│   ├── store/                   # 状态管理（auth/order）
-│   ├── components/              # 公共组件
-│   └── pages/                   # 页面（home/list/detail/login/user/city-picker）
-└── package.json
+├─ config/
+├─ src/
+│  ├─ app.tsx
+│  ├─ app.config.ts
+│  ├─ config/api.ts
+│  ├─ utils/request.ts
+│  ├─ services/          # auth/hotel/booking/map/holiday
+│  ├─ store/             # useAuthStore/useOrderStore
+│  ├─ components/
+│  └─ pages/             # home/list/detail/login/user/city-picker
+└─ package.json
 ```
 
-## 快速开始
+## 快速启动
 
 ### 1. 安装依赖
 
@@ -44,85 +49,97 @@ cd mobile
 npm install
 ```
 
-### 2. 启动后端
+### 2. 启动后端（必须）
 
 ```bash
-cd server
+cd ../server
 npm install
 npm run dev
 ```
 
-### 3. 启动小程序编译
+### 3. 启动小程序开发编译
 
 ```bash
-cd mobile
+cd ../mobile
 npm run dev:weapp
 ```
 
 ### 4. 微信开发者工具导入
 
-- 导入目录：项目根目录（包含 `project.config.json`）
+- 导入目录：仓库根目录（不是 `mobile/` 子目录）
 - 编译输出目录：`mobile/dist`
-- AppID：测试号或你自己的小程序 AppID
+- 项目配置：使用根目录 `project.config.json`
 
 ## 常用命令
 
 ```bash
-# 微信小程序开发
+# 微信小程序
 npm run dev:weapp
-
-# 微信小程序打包
 npm run build:weapp
 
-# H5 开发/打包（可选）
+# H5（可选）
 npm run dev:h5
 npm run build:h5
 ```
 
-## 接口与环境配置
+## 环境配置
 
-移动端请求基于 `mobile/src/utils/request.ts`，默认读取 `mobile/src/config/api.ts` 的 `API_BASE_URL`。
+### API 地址
 
-若你希望通过环境变量覆盖 API 地址，可在构建时注入：
+默认从 `src/config/api.ts` 读取：
+
+- 开发：`http://localhost:3000`
+- 生产：`https://your-production-api.com`（占位）
+
+构建时可用环境变量覆盖：
 
 ```env
 TARO_APP_API_BASE_URL=http://localhost:3000
 ```
 
-### 定位与城市识别说明
+### 地图与定位
 
-- 小程序端通过 `Taro.getLocation` 获取经纬度
-- 后端接口 `GET /api/map/regeo` 负责逆地理编码
-- 当前为腾讯位置服务服务端模式，需在 `server/.env` 配置：
+小程序端调用后端：
 
-```env
-TENCENT_MAP_KEY=你的腾讯位置服务Key
-```
+- `GET /api/map/regeo`
+- `GET /api/map/search`
 
-注意：`TENCENT_MAP_KEY` 配在服务端，不放到小程序前端代码里。
+地图 Key 必须配置在 `server/.env`（不要放到小程序前端）：
+
+- `TENCENT_MAP_KEY`
+- `BAIDU_MAP_AK`（回退方案）
+
+### 微信与短信
+
+以下能力依赖后端云配置：
+
+- 微信手机号登录：`WECHAT_APPID` `WECHAT_SECRET`
+- 短信验证码：`ALIBABA_CLOUD_ACCESS_KEY_ID` 等 `ALIYUN_*` 变量
 
 ## 关键页面
 
-- `src/pages/home/index.tsx`：首页与目的地入口
-- `src/pages/city-picker/index.tsx`：城市选择页与定位逻辑
-- `src/pages/list/index.tsx`：酒店列表与筛选
-- `src/pages/detail/index.tsx`：酒店详情、地图、预订
-- `src/pages/user/index.tsx`：我的页面与订单入口
+- `src/pages/home/index.tsx`: 首页、广告位、快捷筛选入口
+- `src/pages/city-picker/index.tsx`: 城市选择、定位、字母索引
+- `src/pages/list/index.tsx`: 列表筛选、排序、虚拟列表
+- `src/pages/detail/index.tsx`: 详情、地图、下单、节假日折扣展示
+- `src/pages/login/index.tsx`: 登录注册、验证码、微信手机号登录
+- `src/pages/user/index.tsx`: 收藏与订单管理
 
 ## 常见问题
 
-### 1) 小程序请求失败：`url not in domain list`
+### 1. 真机请求失败
 
-开发阶段可在微信开发者工具勾选“不校验合法域名”。  
-上线前需在小程序后台配置合法 HTTPS 域名。
-
-### 2) 定位失败或定位不准
-
-- 先确认小程序定位权限已开启
-- 确认后端已配置 `TENCENT_MAP_KEY`
-- 确认后端 `/api/map/regeo` 可访问
-
-### 3) 本机调试正常，真机请求失败
-
-- 不要使用 `localhost`，改为电脑局域网 IP（如 `http://192.168.1.100:3000`）
+- 不要使用 `localhost`，改成电脑局域网 IP
 - 手机和电脑需在同一局域网
+- 小程序后台配置合法 HTTPS 域名（上线环境）
+
+### 2. 定位失败
+
+- 检查小程序定位授权
+- 检查后端地图 Key 是否已配置
+- 检查 `/api/map/regeo` 和 `/api/map/search` 是否可访问
+
+### 3. 微信手机号登录失败
+
+- 确认 `WECHAT_APPID`/`WECHAT_SECRET` 正确
+- 确认当前在微信小程序环境，不是 H5

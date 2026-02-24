@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { Layout, Button, Table, Space, message, Tag, Menu, Select, Spin } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ShopOutlined } from '@ant-design/icons';
@@ -28,9 +29,11 @@ function BookingList() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedHotelId, setSelectedHotelId] = useState<string | undefined>();
+  const [selectedHotelId, setSelectedHotelId] = useState<string | undefined>(undefined);
   const navigate = useNavigate();
-  const api = useApi({ showMessage: false });
+
+  // 关键修复：只使用稳定方法引用，避免把整个 api 对象作为依赖导致请求循环。
+  const { get, put } = useApi({ showMessage: false });
 
   const user = useMemo(() => JSON.parse(localStorage.getItem('user') || '{}'), []);
 
@@ -82,11 +85,6 @@ function BookingList() {
         },
       ];
 
-  useEffect(() => {
-    fetchHotels();
-    fetchBookings();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const fetchHotels = useCallback(async () => {
     try {
       const params: any = {
@@ -98,25 +96,26 @@ function BookingList() {
         params.merchantId = user.id;
       }
 
-      const response = await api.get('http://localhost:3000/api/hotels', {
+      const response = await get('http://localhost:3000/api/hotels', {
         params,
       });
 
       if (response.data.code === 200) {
-        setHotels(response.data.data);
+        setHotels(response.data.data || []);
       } else {
         message.error(response.data.message || '获取酒店列表失败');
       }
     } catch (error: any) {
       message.error('获取酒店列表失败');
-      console.error('Error:', error);
+      console.error('fetchHotels error:', error);
     }
-  }, [api, user.role, user.id]);
+  }, [get, user.role, user.id]);
 
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('http://localhost:3000/api/bookings', {
+
+      const response = await get('http://localhost:3000/api/bookings', {
         params: {
           role: user.role,
           userId: user.id,
@@ -125,29 +124,37 @@ function BookingList() {
       });
 
       if (response.data.code === 200) {
-        setBookings(response.data.data);
+        setBookings(response.data.data || []);
       } else {
         message.error(response.data.message || '获取预订列表失败');
       }
     } catch (error: any) {
       message.error('获取预订列表失败');
-      console.error('Error:', error);
+      console.error('fetchBookings error:', error);
     } finally {
       setLoading(false);
     }
-  }, [api, user.role, user.id, selectedHotelId]);
+  }, [get, user.role, user.id, selectedHotelId]);
 
   useEffect(() => {
-    if (user.role === 'merchant' || selectedHotelId) {
-      fetchBookings();
-    }
-  }, [selectedHotelId, fetchBookings, user.role]);
+    fetchHotels();
+  }, [fetchHotels]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
-      const response = await api.put(
+      const response = await put(
         `http://localhost:3000/api/bookings/${bookingId}`,
-        { status: newStatus }
+        { status: newStatus },
+        {
+          params: {
+            role: user.role,
+            userId: user.id,
+          },
+        }
       );
 
       if (response.data.code === 200) {
@@ -158,7 +165,7 @@ function BookingList() {
       }
     } catch (error: any) {
       message.error(error.response?.data?.message || '更新失败');
-      console.error('Error:', error);
+      console.error('handleStatusChange error:', error);
     }
   };
 
@@ -199,12 +206,12 @@ function BookingList() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const statusMap: any = {
-          pending: <Tag color="orange">待确认</Tag>,
-          confirmed: <Tag color="green">已确认</Tag>,
-          cancelled: <Tag color="red">已取消</Tag>,
+        const statusMap: Record<string, ReactNode> = {
+          pending: <Tag color='orange'>待确认</Tag>,
+          confirmed: <Tag color='green'>已确认</Tag>,
+          cancelled: <Tag color='red'>已取消</Tag>,
         };
-        return statusMap[status] || status;
+        return statusMap[status] || <Tag>{status}</Tag>;
       },
     },
     {
@@ -214,8 +221,8 @@ function BookingList() {
         <Space>
           {record.status === 'pending' && (
             <Button
-              type="primary"
-              size="small"
+              type='primary'
+              size='small'
               onClick={() => handleStatusChange(record.id, 'confirmed')}
             >
               确认
@@ -224,7 +231,7 @@ function BookingList() {
           {record.status !== 'cancelled' && (
             <Button
               danger
-              size="small"
+              size='small'
               onClick={() => handleStatusChange(record.id, 'cancelled')}
             >
               取消
@@ -237,19 +244,31 @@ function BookingList() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider theme="dark" width={200}>
+      <Sider theme='dark' width={200}>
         <div style={{ color: 'white', padding: '20px', textAlign: 'center', fontSize: '16px', fontWeight: 'bold' }}>
           易宿酒店后台
         </div>
-        <Menu theme="dark" mode="inline" items={menuItems} />
+        <Menu theme='dark' mode='inline' items={menuItems} />
       </Sider>
 
       <Layout>
-        <Header style={{ background: '#1890ff', color: 'white', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Header
+          style={{
+            background: '#1890ff',
+            color: 'white',
+            padding: '0 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <h2 style={{ margin: 0, color: 'white' }}>
             {user.role === 'admin' ? '预订管理' : '预订查询'}
           </h2>
-          <Button onClick={() => navigate('/dashboard')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}>
+          <Button
+            onClick={() => navigate('/dashboard')}
+            style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}
+          >
             返回
           </Button>
         </Header>
@@ -259,26 +278,19 @@ function BookingList() {
             <div style={{ marginBottom: '20px', background: 'white', padding: '15px', borderRadius: '4px' }}>
               <label style={{ marginRight: '10px' }}>按酒店筛选：</label>
               <Select
-                placeholder="选择酒店（不选则显示全部）"
+                placeholder='选择酒店（不选则显示全部）'
                 style={{ width: '300px' }}
                 allowClear
-                onChange={(value) => setSelectedHotelId(value)}
-                options={[
-                  { label: '全部酒店', value: undefined },
-                  ...hotels.map(h => ({ label: h.name, value: h.id })),
-                ]}
+                value={selectedHotelId}
+                onChange={(value: string | undefined) => setSelectedHotelId(value)}
+                options={hotels.map(h => ({ label: h.name, value: h.id }))}
               />
             </div>
           )}
 
           <div style={{ background: 'white', padding: '20px', borderRadius: '4px' }}>
             <Spin spinning={loading}>
-              <Table
-                columns={columns}
-                dataSource={bookings}
-                loading={loading}
-                rowKey="id"
-              />
+              <Table columns={columns} dataSource={bookings} loading={loading} rowKey='id' />
             </Spin>
           </div>
         </Content>

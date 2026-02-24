@@ -9,10 +9,10 @@
     "build:h5": "npx taro build --type h5"
   },
   "dependencies": {
-    "@tarojs/components": "^3.6.16",
-    "@tarojs/react": "^3.6.16",
+    "@tarojs/components": "^3.6.38",
+    "@tarojs/react": "^3.6.38",
     "@tarojs/router": "^3.6.38",
-    "@tarojs/runtime": "^3.6.16",
+    "@tarojs/runtime": "^3.6.38",
     "dayjs": "^1.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -20,13 +20,13 @@
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.2",
-    "@tarojs/cli": "^3.6.16",
-    "@tarojs/plugin-framework-react": "^3.6.16",
-    "@tarojs/plugin-platform-h5": "^4.1.11",
-    "@tarojs/taro": "^3.6.16",
-    "@tarojs/taro-loader": "^4.1.11",
-    "@tarojs/webpack5-runner": "^3.6.16",
-    "babel-preset-taro": "^3.6.16",
+    "@tarojs/cli": "^3.6.38",
+    "@tarojs/plugin-framework-react": "^3.6.38",
+    "@tarojs/plugin-platform-h5": "^3.6.38",
+    "@tarojs/taro": "^3.6.38",
+    "@tarojs/taro-loader": "^3.6.38",
+    "@tarojs/webpack5-runner": "^3.6.38",
+    "babel-preset-taro": "^3.6.38",
     "react-refresh": "^0.18.0",
     "typescript": "^5.4.5"
   }

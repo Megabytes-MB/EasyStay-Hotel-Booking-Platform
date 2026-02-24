@@ -43,7 +43,7 @@ const User = () => {
   const handleDeleteOrder = async (order: OrderItem) => {
     const modalRes = await Taro.showModal({
       title: '删除预订',
-      content: '该记录将从我的订单中移除，确定删除吗？',
+      content: '这条记录将从我的订单中移除，确认删除吗？',
       confirmText: '删除',
       confirmColor: '#ff4d4f',
       cancelText: '取消',
@@ -55,14 +55,19 @@ const User = () => {
 
   if (!isLogin) {
     return (
-      <View className="page user-page">
-        <View className="card empty">
-          <Text>登录后查看收藏与订单</Text>
+      <View className='page user-page guest-page'>
+        <View className='card empty guest-card'>
+          <View className='guest-title'>
+            <View className='text-icon icon-lock' />
+            <Text>登录后查看收藏与订单</Text>
+          </View>
+          <Text className='guest-desc'>解锁收藏管理与订单追踪</Text>
           <View
-            className="btn-primary"
+            className='btn-primary login-btn'
             onClick={() => Taro.navigateTo({ url: '/pages/login/index' })}
           >
-            去登录
+            <View className='login-btn-icon icon-arrow-right' />
+            <Text>去登录</Text>
           </View>
         </View>
       </View>
@@ -70,61 +75,71 @@ const User = () => {
   }
 
   return (
-    <View className="page user-page">
-      <View className="card profile">
-        <Image className="avatar" src={userInfo?.avatar} />
+    <View className='page user-page'>
+      <View className='card profile'>
+        <Image className='avatar' src={userInfo?.avatar} />
         <View>
-          <Text className="name">{userInfo?.name}</Text>
-          <Text className="muted">{userInfo?.phone}</Text>
+          <Text className='name'>{userInfo?.name}</Text>
+          <Text className='muted'>{userInfo?.phone}</Text>
         </View>
-        <View className="logout" onClick={logout}>
-          退出
+        <View className='logout' onClick={logout}>
+          <View className='logout-icon icon-logout' />
+          <Text>退出</Text>
         </View>
       </View>
 
-      <View className="card section">
-        <Text className="section-title">我的收藏</Text>
-        {favorites.length === 0 && <Text className="muted">暂无收藏</Text>}
+      <View className='card section'>
+        <View className='section-title'>
+          <View className='title-icon icon-heart' />
+          <Text>我的收藏</Text>
+        </View>
+        {favorites.length === 0 && <Text className='muted'>暂无收藏</Text>}
         {favorites.map(item => (
           <View
             key={item.id}
-            className="fav-item"
+            className='fav-item'
             onClick={() => Taro.navigateTo({ url: `/pages/detail/index?id=${item.id}` })}
           >
             <Text>{item.name}</Text>
-            <Text className="muted">点击查看详情</Text>
+            <View className='detail-link muted'>
+              <View className='inline-icon icon-link' />
+              <Text>查看详情</Text>
+            </View>
           </View>
         ))}
       </View>
 
-      <View className="card section">
-        <View className="section-header">
-          <Text className="section-title">我的订单</Text>
+      <View className='card section'>
+        <View className='section-header'>
+          <View className='section-title'>
+            <View className='title-icon icon-order' />
+            <Text>我的订单</Text>
+          </View>
           <View
             className={`refresh-btn ${loading ? 'disabled' : ''}`}
             onClick={loading ? undefined : handleRefreshOrders}
           >
-            {loading ? '刷新中...' : '刷新'}
+            <View className={`refresh-icon ${loading ? 'spinning' : ''}`} />
           </View>
         </View>
-        {orders.length === 0 && <Text className="muted">暂无订单</Text>}
+        {orders.length === 0 && <Text className='muted'>暂无订单</Text>}
         {orders.map(order => (
-          <View key={order.id} className="order-item">
-            <View className="order-info">
-              <Text className="order-title">{order.hotelName}</Text>
-              <Text className="order-subtitle">{order.roomName}</Text>
-              <Text className="order-meta">
+          <View key={order.id} className='order-item'>
+            <View className='order-info'>
+              <Text className='order-title'>{order.hotelName}</Text>
+              <Text className='order-subtitle'>{order.roomName}</Text>
+              <Text className='order-meta'>
                 {order.checkIn} 至 {order.checkOut} · {order.nights} 晚
               </Text>
             </View>
-            <View className="order-actions">
+            <View className='order-actions'>
               <Text className={`status status-${order.statusTone}`}>{order.status}</Text>
               {canDeleteOrder(order) && (
                 <View
                   className={`order-delete-btn ${loading ? 'disabled' : ''}`}
                   onClick={loading ? undefined : () => void handleDeleteOrder(order)}
                 >
-                  ×
+                  <View className='delete-icon' />
                 </View>
               )}
             </View>

@@ -1,11 +1,23 @@
 :root {
-  --brand: #1890ff;
-  --text: #1f2329;
-  --muted: #8a8f98;
-  --bg: #f6f7fb;
+  --brand: #1677ff;
+  --brand-dark: #0d5ad8;
+  --brand-soft: #e8f2ff;
+  --accent: #ff8a34;
+  --text-strong: #0f172a;
+  --text: #1e293b;
+  --muted: #64748b;
+  --bg: #f2f6fb;
   --card: #ffffff;
-  --danger: #ff4d4f;
-  --success: #52c41a;
+  --card-soft: #f8fbff;
+  --surface: #f4f8ff;
+  --surface-alt: #edf3fb;
+  --border: #e5edf6;
+  --border-soft: #deebfb;
+  --danger: #ef4444;
+  --success: #16a34a;
+  --tab-muted: #6b7280;
+  --chip-text: #475569;
+  --shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
 }
 
 page {
@@ -16,35 +28,50 @@ page {
 
 .page {
   min-height: 100vh;
-  padding: 24px;
-  box-sizing: border-box;
+  padding: 24px 24px 36px;
 }
 
 .card {
   background: var(--card);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .muted {
   color: var(--muted);
 }
 
+input {
+  font-size: 24px;
+  color: var(--text-strong);
+  min-height: 64px;
+  line-height: 64px;
+}
+
 .btn-primary {
-  background: #ff6a00;
-  color: #fff;
-  border-radius: 12px;
-  padding: 14px 20px;
-  text-align: center;
+  min-height: 74px;
+  padding: 0 20px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
   font-weight: 600;
+  color: #fff;
+  background-color: #1677ff;
+  background-image: linear-gradient(135deg, #1677ff, #0d5ad8);
+  box-shadow: 0 10px 24px rgba(22, 119, 255, 0.3);
 }
 
 .btn-primary:active {
-  background: #7bbcff;
+  opacity: 0.92;
+  transform: translateY(1px);
 }
 
 .btn-primary[disabled] {
-  background: #ffd1b3;
-  color: #fff;
+  background: #b9d7ff;
+  color: #f8fbff;
+  box-shadow: none;
 }

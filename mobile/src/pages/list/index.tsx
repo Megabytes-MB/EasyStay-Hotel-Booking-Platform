@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, Image, Input } from '@tarojs/components'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
+import Taro, { useDidShow, usePullDownRefresh, useRouter } from '@tarojs/taro'
 import dayjs from 'dayjs'
 import VirtualList from '../../components/VirtualList'
 import CustomCalendar from '../../components/CustomCalendar'
 import { fetchHotels, Hotel } from '../../services/hotel'
 import { resolveSearchLocationPoint } from '../../services/map'
-import { useAuthStore } from '../../store/useAuthStore'
 import { formatPrice } from '../../utils/format'
 import './index.scss'
 
@@ -39,6 +38,12 @@ interface ListFilters {
   startDate: string
   endDate: string
   quickTags: string[]
+}
+
+interface LoadHotelsOptions {
+  reset?: boolean
+  showLoading?: boolean
+  force?: boolean
 }
 
 const defaultFilters: ListFilters = {
@@ -125,7 +130,6 @@ const calculateDistanceKm = (
 
 const HotelList = () => {
   const router = useRouter()
-  const { isLogin } = useAuthStore()
   const routeParams = (router?.params || {}) as Record<string, string>
 
   const initialCity = decodeSafe(routeParams.city || '')
@@ -142,6 +146,7 @@ const HotelList = () => {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [activeSection, setActiveSection] = useState<'' | 'price' | 'tags' | 'room'>('')
@@ -171,33 +176,63 @@ const HotelList = () => {
   )
   const canSortByDistance = searchLocationText.length > 0
 
-  const loadHotels = async (p: number, reset = false) => {
-    if (loading) return
+  const loadHotels = async (p: number, options: LoadHotelsOptions = {}) => {
+    const { reset = false, showLoading = true, force = false } = options
+    if (loading && !force) return
     setLoading(true)
-    Taro.showLoading({ title: '加载中' })
+    if (showLoading) {
+      Taro.showLoading({ title: 'loading...' })
+    }
 
-    const res = await fetchHotels({
-      page: p,
-      pageSize: PAGE_SIZE,
-      city,
-      keyword: searchLocationText ? undefined : (appliedFilters.keyword || undefined),
-      roomType: appliedFilters.roomType || undefined,
-      minPrice: appliedFilters.minPrice ? Number(appliedFilters.minPrice) : undefined,
-      maxPrice: appliedFilters.maxPrice ? Number(appliedFilters.maxPrice) : undefined,
-      startDate: appliedFilters.startDate || undefined,
-      endDate: appliedFilters.endDate || undefined,
-    })
-    const nextList = Array.isArray(res?.list) ? res.list : []
-    const safeHasMore = Boolean(res?.hasMore)
+    try {
+      const res = await fetchHotels({
+        page: p,
+        pageSize: PAGE_SIZE,
+        city,
+        keyword: searchLocationText ? undefined : (appliedFilters.keyword || undefined),
+        roomType: appliedFilters.roomType || undefined,
+        minPrice: appliedFilters.minPrice ? Number(appliedFilters.minPrice) : undefined,
+        maxPrice: appliedFilters.maxPrice ? Number(appliedFilters.maxPrice) : undefined,
+        startDate: appliedFilters.startDate || undefined,
+        endDate: appliedFilters.endDate || undefined,
+      })
+      const nextList = Array.isArray(res?.list) ? res.list : []
+      const safeHasMore = Boolean(res?.hasMore)
 
-    Taro.hideLoading()
-    setLoading(false)
-    setHasMore(safeHasMore)
-    setList(prev => {
-      const safePrev = Array.isArray(prev) ? prev : []
-      return reset ? nextList : [...safePrev, ...nextList]
-    })
+      setHasMore(safeHasMore)
+      setList(prev => {
+        const safePrev = Array.isArray(prev) ? prev : []
+        return reset ? nextList : [...safePrev, ...nextList]
+      })
+    } catch (error) {
+      Taro.showToast({
+        title: 'load failed',
+        icon: 'none',
+      })
+    } finally {
+      if (showLoading) {
+        Taro.hideLoading()
+      }
+      setLoading(false)
+    }
   }
+
+  const handleRefresh = async () => {
+    if (refreshing || loading) return
+    setRefreshing(true)
+    setPage(1)
+    try {
+      await loadHotels(1, { reset: true, showLoading: false, force: true })
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  usePullDownRefresh(() => {
+    handleRefresh().finally(() => {
+      Taro.stopPullDownRefresh()
+    })
+  })
 
   useDidShow(() => {
     const savedCity = Taro.getStorageSync(CITY_STORAGE_KEY)
@@ -208,7 +243,7 @@ const HotelList = () => {
 
   useEffect(() => {
     setPage(1)
-    loadHotels(1, true)
+    loadHotels(1, { reset: true })
   }, [city, appliedFilters])
 
   useEffect(() => {
@@ -495,7 +530,8 @@ const HotelList = () => {
             </View>
           </View>
           <View className='toggle-filter right' onClick={() => setShowFilter(prev => !prev)}>
-            {showFilter ? '收起详细筛选' : '展开详细筛选'}
+            <View className='toggle-filter-icon' />
+            <Text className='toggle-filter-arrow'>{showFilter ? '▴' : '▾'}</Text>
           </View>
         </View>
       </View>
@@ -625,19 +661,25 @@ const HotelList = () => {
         data={sortedList}
         itemHeight={200}
         height={900}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
         onReachBottom={handleScrollToLower}
         renderItem={(item: Hotel) => (
           <View className='hotel-card' onClick={() => goDetail(item.id)}>
             <Image className='thumb' src={item.thumb} />
             <View className='info'>
               <Text className='name'>{item.name}</Text>
+<<<<<<< HEAD
               <Text className='score'>
                 {item.starLevel ? `${item.starLevel}钻 · ` : ''}
                 {item.score.toFixed(1)} 分
               </Text>
+=======
+              <Text className='score'>{item.score.toFixed(1)} 分</Text>
+              <Text className='address'>{item.address || `${item.city}市中心`}</Text>
+>>>>>>> b874dd99de65db2c492d890d8c918d6cab643ca8
               <View className='price-row'>
                 <Text className='price'>{formatPrice(item.price)} 起</Text>
-                {isLogin && item.isMemberDeal && <Text className='member-tag'>会员价</Text>}
               </View>
             </View>
           </View>

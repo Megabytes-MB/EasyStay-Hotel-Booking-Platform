@@ -35,7 +35,7 @@ export interface BuildTagsParams {
 export const buildHotelTagsFromFeatures = ({ score, features }: BuildTagsParams) => {
   const tags = new Set<string>()
 
-  if (score >= 4.6) tags.add('高评分')
+  if (score >= 4.6) tags.add('高星级')
   if (typeof features.subwayDistanceMeters === 'number' && features.subwayDistanceMeters <= 600) {
     tags.add('近地铁')
   }
@@ -77,4 +77,3 @@ export const resolveNearbyFeatures = async ({
     hasBusinessDistrict: subwayDistanceMeters < 550
   }
 }
-
