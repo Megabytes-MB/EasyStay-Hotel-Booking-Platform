@@ -339,6 +339,15 @@
   font-weight: 600;
 }
 
+.address {
+  color: #64748b;
+  font-size: 20px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .price-row {
   display: flex;
   align-items: center;

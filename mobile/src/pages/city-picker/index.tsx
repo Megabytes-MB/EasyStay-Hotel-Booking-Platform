@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Input, Text, View } from '@tarojs/components'
 import Taro, { getCurrentInstance } from '@tarojs/taro'
 import { reverseGeocodeByLocation } from '../../services/map'
+import { designPxToDevicePx, getDeviceWindowWidth } from '../../utils/layout'
 import './index.scss'
 
 type TabKey = 'domestic' | 'intl'
@@ -197,8 +198,10 @@ const CityPicker = () => {
   const [activeAnchor, setActiveAnchor] = useState('current')
   const autoLocateTriggeredRef = useRef(false)
 
+  const [windowWidth] = useState(() => getDeviceWindowWidth())
   const statusBarHeight = getSafeStatusBarHeight()
-  const headerOffset = statusBarHeight + 170
+  const headerTopPadding = statusBarHeight + designPxToDevicePx(12, windowWidth)
+  const headerOffset = statusBarHeight + designPxToDevicePx(170, windowWidth)
 
   useEffect(() => {
     const savedLocatedCity = Taro.getStorageSync(LOCATION_CITY_KEY)
@@ -353,7 +356,7 @@ const CityPicker = () => {
 
   return (
     <View className='page city-picker-page'>
-      <View className='picker-header' style={{ paddingTop: `${statusBarHeight + 12}px` }}>
+      <View className='picker-header' style={{ paddingTop: `${headerTopPadding}px` }}>
         <View className='header-row'>
           <Text className='back-btn' onClick={() => Taro.navigateBack()}>
             &#8249;

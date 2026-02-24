@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, Image, Input } from '@tarojs/components'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
+import Taro, { useDidShow, usePullDownRefresh, useRouter } from '@tarojs/taro'
 import dayjs from 'dayjs'
 import VirtualList from '../../components/VirtualList'
 import CustomCalendar from '../../components/CustomCalendar'
@@ -38,6 +38,12 @@ interface ListFilters {
   startDate: string
   endDate: string
   quickTags: string[]
+}
+
+interface LoadHotelsOptions {
+  reset?: boolean
+  showLoading?: boolean
+  force?: boolean
 }
 
 const defaultFilters: ListFilters = {
@@ -140,6 +146,7 @@ const HotelList = () => {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [activeSection, setActiveSection] = useState<'' | 'price' | 'tags' | 'room'>('')
@@ -169,33 +176,63 @@ const HotelList = () => {
   )
   const canSortByDistance = searchLocationText.length > 0
 
-  const loadHotels = async (p: number, reset = false) => {
-    if (loading) return
+  const loadHotels = async (p: number, options: LoadHotelsOptions = {}) => {
+    const { reset = false, showLoading = true, force = false } = options
+    if (loading && !force) return
     setLoading(true)
-    Taro.showLoading({ title: '加载中' })
+    if (showLoading) {
+      Taro.showLoading({ title: 'loading...' })
+    }
 
-    const res = await fetchHotels({
-      page: p,
-      pageSize: PAGE_SIZE,
-      city,
-      keyword: searchLocationText ? undefined : (appliedFilters.keyword || undefined),
-      roomType: appliedFilters.roomType || undefined,
-      minPrice: appliedFilters.minPrice ? Number(appliedFilters.minPrice) : undefined,
-      maxPrice: appliedFilters.maxPrice ? Number(appliedFilters.maxPrice) : undefined,
-      startDate: appliedFilters.startDate || undefined,
-      endDate: appliedFilters.endDate || undefined,
-    })
-    const nextList = Array.isArray(res?.list) ? res.list : []
-    const safeHasMore = Boolean(res?.hasMore)
+    try {
+      const res = await fetchHotels({
+        page: p,
+        pageSize: PAGE_SIZE,
+        city,
+        keyword: searchLocationText ? undefined : (appliedFilters.keyword || undefined),
+        roomType: appliedFilters.roomType || undefined,
+        minPrice: appliedFilters.minPrice ? Number(appliedFilters.minPrice) : undefined,
+        maxPrice: appliedFilters.maxPrice ? Number(appliedFilters.maxPrice) : undefined,
+        startDate: appliedFilters.startDate || undefined,
+        endDate: appliedFilters.endDate || undefined,
+      })
+      const nextList = Array.isArray(res?.list) ? res.list : []
+      const safeHasMore = Boolean(res?.hasMore)
 
-    Taro.hideLoading()
-    setLoading(false)
-    setHasMore(safeHasMore)
-    setList(prev => {
-      const safePrev = Array.isArray(prev) ? prev : []
-      return reset ? nextList : [...safePrev, ...nextList]
-    })
+      setHasMore(safeHasMore)
+      setList(prev => {
+        const safePrev = Array.isArray(prev) ? prev : []
+        return reset ? nextList : [...safePrev, ...nextList]
+      })
+    } catch (error) {
+      Taro.showToast({
+        title: 'load failed',
+        icon: 'none',
+      })
+    } finally {
+      if (showLoading) {
+        Taro.hideLoading()
+      }
+      setLoading(false)
+    }
   }
+
+  const handleRefresh = async () => {
+    if (refreshing || loading) return
+    setRefreshing(true)
+    setPage(1)
+    try {
+      await loadHotels(1, { reset: true, showLoading: false, force: true })
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  usePullDownRefresh(() => {
+    handleRefresh().finally(() => {
+      Taro.stopPullDownRefresh()
+    })
+  })
 
   useDidShow(() => {
     const savedCity = Taro.getStorageSync(CITY_STORAGE_KEY)
@@ -206,7 +243,7 @@ const HotelList = () => {
 
   useEffect(() => {
     setPage(1)
-    loadHotels(1, true)
+    loadHotels(1, { reset: true })
   }, [city, appliedFilters])
 
   useEffect(() => {
@@ -624,6 +661,8 @@ const HotelList = () => {
         data={sortedList}
         itemHeight={200}
         height={900}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
         onReachBottom={handleScrollToLower}
         renderItem={(item: Hotel) => (
           <View className='hotel-card' onClick={() => goDetail(item.id)}>
@@ -631,6 +670,7 @@ const HotelList = () => {
             <View className='info'>
               <Text className='name'>{item.name}</Text>
               <Text className='score'>{item.score.toFixed(1)} 分</Text>
+              <Text className='address'>{item.address || `${item.city}市中心`}</Text>
               <View className='price-row'>
                 <Text className='price'>{formatPrice(item.price)} 起</Text>
               </View>

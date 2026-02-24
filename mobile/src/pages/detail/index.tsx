@@ -171,7 +171,7 @@ const HotelDetail = () => {
           </LoginGuard>
         </View>
         <Text className='muted'>
-          评分 {detail.score.toFixed(1)} · {detail.city}
+          星级 {detail.score.toFixed(1)} · {detail.city}
         </Text>
       </View>
 

@@ -377,7 +377,7 @@ function HotelForm() {
             </Form.Item>
 
             <Form.Item
-              label='酒店星级评分（0-5）'
+              label='酒店星级（0-5）'
               name='rating'
               rules={[
                 {
@@ -385,7 +385,7 @@ function HotelForm() {
                     if (value === undefined || value === null || value === '') return Promise.resolve();
                     const score = Number(value);
                     if (Number.isFinite(score) && score >= 0 && score <= 5) return Promise.resolve();
-                    return Promise.reject(new Error('评分必须在 0 到 5 之间'));
+                    return Promise.reject(new Error('星级必须在 0 到 5 之间'));
                   },
                 },
               ]}

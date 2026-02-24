@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { View, Text, Input, Image, Swiper, SwiperItem } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useDidShow } from '@tarojs/taro'
+import { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { useAuthStore } from '../../store/useAuthStore'
 import { fetchHomeAdHotels, Hotel } from '../../services/hotel'
 import './index.scss'
@@ -11,8 +11,8 @@ const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=200'
 const STAR_PRESET_OPTIONS = [
   { label: '不限', value: '' },
-  { label: '4钻+', value: '4' },
-  { label: '4.5分+', value: '4.5' },
+  { label: '4星+', value: '4' },
+  { label: '4.5星+', value: '4.5' },
 ]
 const PRICE_PRESET_OPTIONS = [
   { label: '不限', value: '' },
@@ -38,6 +38,25 @@ const Home = () => {
   const [city, setCity] = useState('上海')
   const [homeAds, setHomeAds] = useState<Hotel[]>([])
 
+  const syncCityFromStorage = useCallback(() => {
+    const savedCity = Taro.getStorageSync(CITY_STORAGE_KEY)
+    if (typeof savedCity === 'string' && savedCity.trim()) {
+      setCity(savedCity)
+    }
+  }, [])
+
+  const loadHomeAds = useCallback(async () => {
+    try {
+      const ads = await fetchHomeAdHotels()
+      setHomeAds(Array.isArray(ads) ? ads : [])
+    } catch (error) {
+      Taro.showToast({
+        title: 'refresh failed',
+        icon: 'none',
+      })
+    }
+  }, [])
+
   const handleSearch = () => {
     const { minPrice, maxPrice } = decodePricePreset(pricePreset)
     const query = [
@@ -61,19 +80,19 @@ const Home = () => {
   }
 
   useEffect(() => {
-    const savedCity = Taro.getStorageSync(CITY_STORAGE_KEY)
-    if (typeof savedCity === 'string' && savedCity.trim()) {
-      setCity(savedCity)
-    }
-
-    fetchHomeAdHotels().then(setHomeAds)
-  }, [])
+    syncCityFromStorage()
+    loadHomeAds()
+  }, [syncCityFromStorage, loadHomeAds])
 
   useDidShow(() => {
-    const savedCity = Taro.getStorageSync(CITY_STORAGE_KEY)
-    if (typeof savedCity === 'string' && savedCity.trim()) {
-      setCity(savedCity)
-    }
+    syncCityFromStorage()
+  })
+
+  usePullDownRefresh(() => {
+    syncCityFromStorage()
+    loadHomeAds().finally(() => {
+      Taro.stopPullDownRefresh()
+    })
   })
 
   const handleAdClick = (hotelId: number) => {
@@ -193,7 +212,7 @@ const Home = () => {
           <Text>猜你喜欢</Text>
         </View>
         <View className='tag-row'>
-          {['高评分', '近地铁', '亲子友好', '城市景观'].map(tag => (
+          {['高星级', '近地铁', '亲子友好', '城市景观'].map(tag => (
             <Text key={tag} className='tag' onClick={() => handleTagClick(tag)}>
               {tag}
             </Text>
