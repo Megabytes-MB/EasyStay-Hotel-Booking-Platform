@@ -282,4 +282,3 @@ A:
 ## License
 
 MIT
-```
